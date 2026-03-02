@@ -5,7 +5,7 @@ from app.database import engine, get_db, Base
 from app import models
 from app import schemas
 from app import crud
-from app import router
+from app.routes import router
 
 
 app = FastAPI(
