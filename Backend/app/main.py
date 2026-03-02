@@ -2,14 +2,12 @@ from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
-from app.database import engine, get_db
+from app.database import engine, get_db, Base
 import models
 import schemas
 import crud
 from routes import router
 
-# Crear tablas automáticamente al arrancar
-models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="Asistente Universitario API",
@@ -17,6 +15,13 @@ app = FastAPI(
     version="1.0.0",
 )
 
+# 🔥 Crear tablas al iniciar correctamente
+@app.on_event("startup")
+def on_startup():
+    Base.metadata.create_all(bind=engine)
+
+
+# CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -25,9 +30,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Registrar rutas
+# Registrar rutas externas
 app.include_router(router)
 
+@app.get("/")
+def root():
+    return {"message": "API running correctly"}
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
 
 # ─── Endpoint de chat principal ───────────────────────────
 @app.post("/chat", response_model=schemas.ChatResponse, tags=["Chat"])
@@ -45,7 +57,7 @@ def chat(request: schemas.ChatRequest, db: Session = Depends(get_db)):
         content=request.message,
     ))
 
-    # 3. Respuesta placeholder (hasta integrar TinyLlama)
+    # 3. Respuesta placeholder
     bot_response = "Hola, soy tu asistente universitario. Pronto estaré completamente entrenado."
     predicted_intent = "general_query"
     confidence = 0.95
