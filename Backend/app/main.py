@@ -1,11 +1,10 @@
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
-
 from app.database import engine, get_db, Base
-import models
-import schemas
-import crud
+from app import models
+from app import schemas
+from app import crud
 from routes import router
 
 
