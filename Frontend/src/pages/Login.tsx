@@ -10,16 +10,16 @@ import { Spinner } from "@/components/ui/spinner";
 
 export default function Login() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
+  const [cedula, setCedula] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string; general?: string }>({});
+  const [errors, setErrors] = useState<{ cedula?: string; password?: string; general?: string }>({});
 
   const validate = () => {
     const e: typeof errors = {};
-    if (!email) e.email = "El correo es obligatorio";
-    else if (!/\S+@\S+\.\S+/.test(email)) e.email = "Correo inválido";
+    if (!cedula) e.cedula = "La cédula es obligatoria";
+    else if (!/^\d+$/.test(cedula)) e.cedula = "Cédula inválida";
     if (!password) e.password = "La contraseña es obligatoria";
     else if (password.length < 6) e.password = "Mínimo 6 caracteres";
     setErrors(e);
@@ -31,8 +31,8 @@ export default function Login() {
     if (!validate()) return;
     setLoading(true);
     await new Promise((r) => setTimeout(r, 1500));
-    if (email === "error@test.com") {
-      setErrors({ general: "Credenciales incorrectas. Verifica tu correo y contraseña." });
+    if (cedula === "0000000000") {
+      setErrors({ general: "Credenciales incorrectas. Verifica tu cédula y contraseña." });
       setLoading(false);
       return;
     }
@@ -66,12 +66,12 @@ export default function Login() {
               </motion.div>
             )}
             <div className="space-y-2">
-              <Label htmlFor="email">Correo electrónico</Label>
+              <Label htmlFor="cedula">Cédula</Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input id="email" type="email" placeholder="tu@correo.com" className="pl-10 bg-input border-border focus:border-primary focus:ring-primary/20" value={email} onChange={(e) => { setEmail(e.target.value); setErrors((p) => ({ ...p, email: undefined, general: undefined })); }} />
+                <Input id="cedula" type="text" placeholder="1234567890" className="pl-10 bg-input border-border focus:border-primary focus:ring-primary/20" value={cedula} onChange={(e) => { setCedula(e.target.value); setErrors((p) => ({ ...p, cedula: undefined, general: undefined })); }} />
               </div>
-              {errors.email && <p className="text-destructive text-xs mt-1">{errors.email}</p>}
+              {errors.cedula && <p className="text-destructive text-xs mt-1">{errors.cedula}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Contraseña</Label>
