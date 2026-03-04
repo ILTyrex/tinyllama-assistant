@@ -7,6 +7,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
 
 const navItems = [
   { label: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
@@ -26,6 +27,7 @@ interface AppLayoutProps {
 export function AppLayout({ children }: AppLayoutProps) {
   const navigate = useNavigate();
   const location = useLocation();
+  const { logout } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
 
   return (
@@ -82,7 +84,7 @@ export function AppLayout({ children }: AppLayoutProps) {
             {!collapsed && <span>Colapsar</span>}
           </button>
           <button
-            onClick={() => navigate("/")}
+            onClick={logout}
             className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-sidebar-accent/50 hover:text-foreground transition-colors"
           >
             <LogOut className="w-4 h-4" />
