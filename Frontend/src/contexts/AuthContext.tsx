@@ -8,7 +8,11 @@ interface User {
   last_name: string;
   phone: string;
   gmail: string;
+  role?: string;
+  role_display?: string;
   is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
 interface AuthContextType {
@@ -21,6 +25,7 @@ interface AuthContextType {
   register: (identification: string, first_name: string, last_name: string, phone: string, gmail: string, password: string, password_confirm: string) => Promise<void>;
   logout: () => void;
   setAccessToken: (token: string) => void;
+  setUser: (user: User | null) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -115,6 +120,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem('accessToken', token);
   };
 
+  const handleSetUser = (newUser: User | null) => {
+    setUser(newUser);
+    if (newUser) {
+      localStorage.setItem('user', JSON.stringify(newUser));
+    } else {
+      localStorage.removeItem('user');
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -127,6 +141,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         register,
         logout,
         setAccessToken: handleSetAccessToken,
+        setUser: handleSetUser,
       }}
     >
       {children}

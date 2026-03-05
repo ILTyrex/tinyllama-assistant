@@ -3,9 +3,9 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
-from django.contrib.auth.hashers import check_password
+from django.contrib.auth.hashers import check_password, make_password
 from .models import User
-from .serializers import UserSerializer, UserRegisterSerializer, UserLoginSerializer
+from .serializers import UserSerializer, UserRegisterSerializer, UserLoginSerializer, UserUpdateSerializer, ChangePasswordSerializer
 
 
 @api_view(['GET'])
@@ -93,3 +93,55 @@ def refresh_token(request):
         return Response({
             'error': 'Token inválido'
         }, status=status.HTTP_401_UNAUTHORIZED)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_profile(request):
+    """Obtener el perfil del usuario autenticado"""
+    user = request.user
+    serializer = UserSerializer(user)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@api_view(['PUT', 'PATCH'])
+@permission_classes([IsAuthenticated])
+def update_profile(request):
+    """Actualizar el perfil del usuario autenticado"""
+    user = request.user
+    serializer = UserUpdateSerializer(user, data=request.data, partial=True, context={'request': request})
+    if serializer.is_valid():
+        serializer.save()
+        return Response({
+            'message': 'Perfil actualizado exitosamente',
+            'user': UserSerializer(user).data
+        }, status=status.HTTP_200_OK)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def change_password(request):
+    """Cambiar la contraseña del usuario autenticado"""
+    user = request.user
+    serializer = ChangePasswordSerializer(data=request.data)
+    
+    if serializer.is_valid():
+        current_password = serializer.validated_data.get('current_password')
+        new_password = serializer.validated_data.get('new_password')
+        
+        # Verificar que la contraseña actual es correcta
+        if not check_password(current_password, user.password):
+            return Response({
+                'error': 'La contraseña actual es incorrecta'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Actualizar la contraseña
+        user.password = make_password(new_password)
+        user.save()
+        
+        return Response({
+            'message': 'Contraseña actualizada exitosamente'
+        }, status=status.HTTP_200_OK)
+    
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

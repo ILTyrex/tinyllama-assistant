@@ -89,7 +89,41 @@ interface AuthResponse {
     phone: string;
     gmail: string;
     is_active: boolean;
+    role?: string;
+    role_display?: string;
   };
+}
+
+interface UserProfile {
+  id: number;
+  identification: string;
+  first_name: string;
+  last_name: string;
+  phone: string;
+  gmail: string;
+  role: string;
+  role_display: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+interface UpdateProfilePayload {
+  first_name?: string;
+  last_name?: string;
+  phone?: string;
+  gmail?: string;
+}
+
+interface UpdateProfileResponse {
+  message: string;
+  user: UserProfile;
+}
+
+interface ChangePasswordPayload {
+  current_password: string;
+  new_password: string;
+  confirm_password: string;
 }
 
 class AuthAPI {
@@ -122,6 +156,39 @@ class AuthAPI {
       return response.data;
     } catch (error: any) {
       throw new Error('Error refrescando token');
+    }
+  }
+
+  async getProfile(): Promise<UserProfile> {
+    try {
+      const response = await apiClient.get('/auth/me/');
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || 'Error obteniendo perfil');
+    }
+  }
+
+  async updateProfile(payload: UpdateProfilePayload): Promise<UpdateProfileResponse> {
+    try {
+      const response = await apiClient.put('/auth/me/update/', payload);
+      return response.data;
+    } catch (error: any) {
+      const errorMsg = error.response?.data?.gmail?.[0] || 
+                       error.response?.data?.error || 
+                       'Error actualizando perfil';
+      throw new Error(errorMsg);
+    }
+  }
+
+  async changePassword(payload: ChangePasswordPayload): Promise<{ message: string }> {
+    try {
+      const response = await apiClient.post('/auth/me/change-password/', payload);
+      return response.data;
+    } catch (error: any) {
+      const errorMsg = error.response?.data?.error || 
+                       error.response?.data?.new_password || 
+                       'Error cambiando contraseña';
+      throw new Error(Array.isArray(errorMsg) ? errorMsg[0] : errorMsg);
     }
   }
 }

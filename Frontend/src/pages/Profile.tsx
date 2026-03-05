@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { User, Mail, Phone, Building, Calendar, Lock, Eye, EyeOff, BookOpen, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,19 +11,48 @@ import { AppLayout } from "@/components/AppLayout";
 import { mockUser, mockEnrollments, mockActivityLogs } from "@/lib/mock-courses";
 import { useToast } from "@/hooks/use-toast";
 import { Spinner } from "@/components/ui/spinner";
+import { useAuth } from "@/contexts/AuthContext";
+import AuthAPI from "@/api/users.api";
 
 export default function Profile() {
   const { toast } = useToast();
-  const [form, setForm] = useState({ name: mockUser.name, email: mockUser.email, phone: mockUser.phone });
+  const { user, setUser } = useAuth();
+  const [form, setForm] = useState({ first_name: "", last_name: "", gmail: "", phone: "" });
   const [passwordForm, setPasswordForm] = useState({ current: "", newPass: "", confirm: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  // Cargar datos del usuario autenticado
+  useEffect(() => {
+    if (user) {
+      setForm({
+        first_name: user.first_name,
+        last_name: user.last_name,
+        gmail: user.gmail,
+        phone: user.phone,
+      });
+    }
+  }, [user]);
+
   const handleSave = async () => {
     setSaving(true);
-    await new Promise((r) => setTimeout(r, 1000));
-    setSaving(false);
-    toast({ title: "Perfil actualizado", description: "Tus datos se han guardado correctamente" });
+    try {
+      const response = await AuthAPI.updateProfile({
+        first_name: form.first_name,
+        last_name: form.last_name,
+        gmail: form.gmail,
+        phone: form.phone,
+      });
+      
+      // Actualizar el usuario en el contexto
+      setUser(response.user);
+      
+      toast({ title: "Perfil actualizado", description: "Tus datos se han guardado correctamente" });
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleChangePassword = async () => {
@@ -32,13 +61,22 @@ export default function Profile() {
       return;
     }
     setSaving(true);
-    await new Promise((r) => setTimeout(r, 1000));
-    setSaving(false);
-    setPasswordForm({ current: "", newPass: "", confirm: "" });
-    toast({ title: "Contraseña actualizada" });
+    try {
+      await AuthAPI.changePassword({
+        current_password: passwordForm.current,
+        new_password: passwordForm.newPass,
+        confirm_password: passwordForm.confirm,
+      });
+      setPasswordForm({ current: "", newPass: "", confirm: "" });
+      toast({ title: "Contraseña actualizada", description: "Tu contraseña ha sido cambiada exitosamente" });
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const myEnrollments = mockEnrollments.filter((e) => e.studentEmail === "juan@uni.edu");
+  const myEnrollments = mockEnrollments.filter((e) => e.studentEmail === user?.gmail);
 
   return (
     <AppLayout>
@@ -57,13 +95,13 @@ export default function Profile() {
             style={{ boxShadow: "var(--shadow-card)" }}
           >
             <div className="w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-2xl font-display font-bold text-primary">
-              {mockUser.name.charAt(0)}
+              {user?.first_name.charAt(0)}
             </div>
             <div>
-              <h2 className="text-lg font-display font-bold text-foreground">{mockUser.name}</h2>
-              <p className="text-sm text-muted-foreground">{mockUser.role} · {mockUser.department}</p>
+              <h2 className="text-lg font-display font-bold text-foreground">{user?.first_name} {user?.last_name}</h2>
+              <p className="text-sm text-muted-foreground">{user?.role_display} · {mockUser.department}</p>
               <p className="text-xs text-muted-foreground mt-1">
-                Miembro desde {mockUser.joinedAt.toLocaleDateString("es", { month: "long", year: "numeric" })}
+                Miembro desde {user?.created_at ? new Date(user.created_at).toLocaleDateString("es", { month: "long", year: "numeric" }) : ""}
               </p>
             </div>
           </motion.div>
@@ -79,8 +117,9 @@ export default function Profile() {
             <TabsContent value="datos">
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass-surface p-6 space-y-4" style={{ boxShadow: "var(--shadow-card)" }}>
                 {[
-                  { key: "name", label: "Nombre completo", icon: User, type: "text" },
-                  { key: "email", label: "Correo electrónico", icon: Mail, type: "email" },
+                  { key: "first_name", label: "Nombre", icon: User, type: "text" },
+                  { key: "last_name", label: "Apellido", icon: User, type: "text" },
+                  { key: "gmail", label: "Correo electrónico", icon: Mail, type: "email" },
                   { key: "phone", label: "Teléfono", icon: Phone, type: "tel" },
                 ].map((field) => (
                   <div key={field.key} className="space-y-2">
@@ -112,20 +151,24 @@ export default function Profile() {
             <TabsContent value="inscripciones">
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass-surface p-6" style={{ boxShadow: "var(--shadow-card)" }}>
                 <div className="space-y-3">
-                  {myEnrollments.map((enr) => (
-                    <div key={enr.id} className="flex items-center justify-between p-4 rounded-lg bg-secondary/30">
-                      <div className="flex items-center gap-3">
-                        <BookOpen className="w-4 h-4 text-primary" />
-                        <div>
-                          <p className="text-sm font-medium text-foreground">{enr.courseName}</p>
-                          <p className="text-xs text-muted-foreground">{enr.courseCode} · {enr.enrolledAt.toLocaleDateString("es")}</p>
+                  {myEnrollments.length > 0 ? (
+                    myEnrollments.map((enr) => (
+                      <div key={enr.id} className="flex items-center justify-between p-4 rounded-lg bg-secondary/30">
+                        <div className="flex items-center gap-3">
+                          <BookOpen className="w-4 h-4 text-primary" />
+                          <div>
+                            <p className="text-sm font-medium text-foreground">{enr.courseName}</p>
+                            <p className="text-xs text-muted-foreground">{enr.courseCode} · {enr.enrolledAt.toLocaleDateString("es")}</p>
+                          </div>
                         </div>
+                        <Badge variant="secondary" className={`text-[10px] ${enr.status === "active" ? "bg-primary/10 text-primary" : enr.status === "completed" ? "bg-success/20 text-success" : "bg-destructive/10 text-destructive"}`}>
+                          {enr.status === "active" ? "Activa" : enr.status === "completed" ? "Completada" : "Cancelada"}
+                        </Badge>
                       </div>
-                      <Badge variant="secondary" className={`text-[10px] ${enr.status === "active" ? "bg-primary/10 text-primary" : enr.status === "completed" ? "bg-success/20 text-success" : "bg-destructive/10 text-destructive"}`}>
-                        {enr.status === "active" ? "Activa" : enr.status === "completed" ? "Completada" : "Cancelada"}
-                      </Badge>
-                    </div>
-                  ))}
+                    ))
+                  ) : (
+                    <p className="text-sm text-muted-foreground text-center py-8">No tienes inscripciones activas</p>
+                  )}
                 </div>
               </motion.div>
             </TabsContent>
