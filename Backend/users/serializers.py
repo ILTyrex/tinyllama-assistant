@@ -6,17 +6,18 @@ from .models import User
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'identification', 'first_name', 'last_name', 'phone', 'gmail', 'created_at', 'updated_at', 'is_active']
+        fields = ['id', 'identification', 'first_name', 'last_name', 'phone', 'gmail', 'role', 'created_at', 'updated_at', 'is_active']
         read_only_fields = ['id', 'created_at', 'updated_at']
 
 
 class UserRegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=6)
     password_confirm = serializers.CharField(write_only=True, min_length=6)
+    role = serializers.ChoiceField(choices=User.ROLE_CHOICES, default='student', required=False)
 
     class Meta:
         model = User
-        fields = ['identification', 'first_name', 'last_name', 'phone', 'gmail', 'password', 'password_confirm']
+        fields = ['identification', 'first_name', 'last_name', 'phone', 'gmail', 'password', 'password_confirm', 'role']
 
     def validate(self, data):
         if data['password'] != data['password_confirm']:
