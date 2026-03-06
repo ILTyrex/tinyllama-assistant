@@ -17,7 +17,7 @@ import AuthAPI from "@/api/users.api";
 export default function Profile() {
   const { toast } = useToast();
   const { user, setUser } = useAuth();
-  const [form, setForm] = useState({ first_name: "", last_name: "", gmail: "", phone: "" });
+  const [form, setForm] = useState({ first_name: "", last_name: "", email: "", phone: "" });
   const [passwordForm, setPasswordForm] = useState({ current: "", newPass: "", confirm: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -28,7 +28,7 @@ export default function Profile() {
       setForm({
         first_name: user.first_name,
         last_name: user.last_name,
-        gmail: user.gmail,
+        email: user.email,
         phone: user.phone,
       });
     }
@@ -40,7 +40,7 @@ export default function Profile() {
       const response = await AuthAPI.updateProfile({
         first_name: form.first_name,
         last_name: form.last_name,
-        gmail: form.gmail,
+        email: form.email,
         phone: form.phone,
       });
       
@@ -76,7 +76,7 @@ export default function Profile() {
     }
   };
 
-  const myEnrollments = mockEnrollments.filter((e) => e.studentEmail === user?.gmail);
+  const myEnrollments = mockEnrollments.filter((e) => e.studentEmail === user?.email);
 
   return (
     <AppLayout>
@@ -119,7 +119,7 @@ export default function Profile() {
                 {[
                   { key: "first_name", label: "Nombre", icon: User, type: "text" },
                   { key: "last_name", label: "Apellido", icon: User, type: "text" },
-                  { key: "gmail", label: "Correo electrónico", icon: Mail, type: "email" },
+                  { key: "email", label: "Correo electrónico", icon: Mail, type: "email" },
                   { key: "phone", label: "Teléfono", icon: Phone, type: "tel" },
                 ].map((field) => (
                   <div key={field.key} className="space-y-2">

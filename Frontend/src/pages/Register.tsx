@@ -16,7 +16,7 @@ export default function Register() {
     first_name: "",
     last_name: "",
     phone: "",
-    gmail: "",
+    email: "",
     password: "",
     password_confirm: "",
   });
@@ -41,8 +41,10 @@ export default function Register() {
     if (!form.identification.trim()) e.identification = "La identificación es obligatoria";
     else if (!/^\d+$/.test(form.identification)) e.identification = "Identificación inválida";
     if (!form.first_name.trim()) e.first_name = "El nombre es obligatorio";
-    if (!form.last_name.trim()) e.last_name = "El apellido es obligatorio";    if (form.phone && !/^\d+$/.test(form.phone)) e.phone = "Teléfono inválido";
-    if (form.gmail && !/\S+@\S+\.\S+/.test(form.gmail)) e.gmail = "Correo inválido";    if (!form.password) e.password = "La contraseña es obligatoria";
+    if (!form.last_name.trim()) e.last_name = "El apellido es obligatorio";
+    if (form.phone && !/^\d+$/.test(form.phone)) e.phone = "Teléfono inválido";
+    if (form.email && !/\S+@\S+\.\S+/.test(form.email)) e.email = "Correo inválido";
+    if (!form.password) e.password = "La contraseña es obligatoria";
     else if (form.password.length < 6) e.password = "Mínimo 6 caracteres";
     if (form.password !== form.password_confirm) e.password_confirm = "Las contraseñas no coinciden";
     setErrors(e);
@@ -60,7 +62,7 @@ export default function Register() {
         form.first_name,
         form.last_name,
         form.phone,
-        form.gmail,
+        form.email,
         form.password,
         form.password_confirm
       );
@@ -77,8 +79,10 @@ export default function Register() {
   const fields = [
     { key: "identification", label: "Identificación", icon: User, type: "text", placeholder: "1234567890" },
     { key: "first_name", label: "Nombre", icon: User, type: "text", placeholder: "Juan" },
-    { key: "last_name", label: "Apellido", icon: User, type: "text", placeholder: "Pérez" },    { key: "phone", label: "Teléfono", icon: User, type: "text", placeholder: "3001234567" },
-    { key: "gmail", label: "Correo Gmail", icon: Mail, type: "email", placeholder: "usuario@gmail.com" },    { key: "password", label: "Contraseña", icon: Lock, type: "password", placeholder: "••••••••" },
+    { key: "last_name", label: "Apellido", icon: User, type: "text", placeholder: "Pérez" },
+    { key: "phone", label: "Teléfono", icon: User, type: "text", placeholder: "3001234567" },
+    { key: "email", label: "Correo electrónico", icon: Mail, type: "email", placeholder: "usuario@example.com" },
+    { key: "password", label: "Contraseña", icon: Lock, type: "password", placeholder: "••••••••" },
     { key: "password_confirm", label: "Confirmar contraseña", icon: Lock, type: "password", placeholder: "••••••••" },
   ];
 

@@ -8,7 +8,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'identification', 'first_name', 'last_name', 'phone', 'gmail', 'role', 'role_display', 'created_at', 'updated_at', 'is_active']
+        fields = ['id', 'identification', 'first_name', 'last_name', 'phone', 'email', 'role', 'role_display', 'semester', 'created_at', 'updated_at', 'is_active']
         read_only_fields = ['id', 'created_at', 'updated_at', 'role_display']
 
     def get_role_display(self, obj):
@@ -22,7 +22,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['identification', 'first_name', 'last_name', 'phone', 'gmail', 'password', 'password_confirm', 'role']
+        fields = ['identification', 'first_name', 'last_name', 'phone', 'email', 'password', 'password_confirm', 'role', 'semester']
 
     def validate(self, data):
         if data['password'] != data['password_confirm']:
@@ -31,8 +31,8 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         if User.objects.filter(identification=data['identification']).exists():
             raise serializers.ValidationError({"identification": "Esta cédula ya está registrada."})
         
-        if data.get('gmail') and User.objects.filter(gmail=data['gmail']).exists():
-            raise serializers.ValidationError({"gmail": "Este correo ya está registrado."})
+        if data.get('email') and User.objects.filter(email=data['email']).exists():
+            raise serializers.ValidationError({"email": "Este correo ya está registrado."})
         
         return data
 
@@ -50,18 +50,19 @@ class UserLoginSerializer(serializers.Serializer):
 class UserUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['first_name', 'last_name', 'phone', 'gmail']
+        fields = ['first_name', 'last_name', 'phone', 'email', 'semester']
         extra_kwargs = {
             'first_name': {'required': False},
             'last_name': {'required': False},
             'phone': {'required': False},
-            'gmail': {'required': False},
+            'email': {'required': False},
+            'semester': {'required': False},
         }
 
-    def validate_gmail(self, value):
+    def validate_email(self, value):
         """Validar que el email no esté siendo usado por otro usuario"""
         user = self.context.get('request').user
-        if User.objects.filter(gmail=value).exclude(id=user.id).exists():
+        if User.objects.filter(email=value).exclude(id=user.id).exists():
             raise serializers.ValidationError("Este correo ya está registrado.")
         return value
 
@@ -69,7 +70,8 @@ class UserUpdateSerializer(serializers.ModelSerializer):
         instance.first_name = validated_data.get('first_name', instance.first_name)
         instance.last_name = validated_data.get('last_name', instance.last_name)
         instance.phone = validated_data.get('phone', instance.phone)
-        instance.gmail = validated_data.get('gmail', instance.gmail)
+        instance.email = validated_data.get('email', instance.email)
+        instance.semester = validated_data.get('semester', instance.semester)
         instance.save()
         return instance
 

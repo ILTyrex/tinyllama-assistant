@@ -72,7 +72,7 @@ interface RegisterPayload {
   first_name: string;
   last_name: string;
   phone: string;
-  gmail: string;
+  email: string;
   password: string;
   password_confirm: string;
 }
@@ -87,7 +87,7 @@ interface AuthResponse {
     first_name: string;
     last_name: string;
     phone: string;
-    gmail: string;
+    email: string;
     is_active: boolean;
     role?: string;
     role_display?: string;
@@ -100,7 +100,7 @@ interface UserProfile {
   first_name: string;
   last_name: string;
   phone: string;
-  gmail: string;
+  email: string;
   role: string;
   role_display: string;
   is_active: boolean;
@@ -112,7 +112,7 @@ interface UpdateProfilePayload {
   first_name?: string;
   last_name?: string;
   phone?: string;
-  gmail?: string;
+  email?: string;
 }
 
 interface UpdateProfileResponse {
@@ -173,7 +173,7 @@ class AuthAPI {
       const response = await apiClient.put('/auth/me/update/', payload);
       return response.data;
     } catch (error: any) {
-      const errorMsg = error.response?.data?.gmail?.[0] || 
+      const errorMsg = error.response?.data?.email?.[0] || 
                        error.response?.data?.error || 
                        'Error actualizando perfil';
       throw new Error(errorMsg);

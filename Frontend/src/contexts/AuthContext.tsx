@@ -7,7 +7,7 @@ interface User {
   first_name: string;
   last_name: string;
   phone: string;
-  gmail: string;
+  email: string;
   role?: string;
   role_display?: string;
   is_active: boolean;
@@ -22,7 +22,7 @@ interface AuthContextType {
   loading: boolean;
   isAuthenticated: boolean;
   login: (identification: string, password: string) => Promise<void>;
-  register: (identification: string, first_name: string, last_name: string, phone: string, gmail: string, password: string, password_confirm: string) => Promise<void>;
+  register: (identification: string, first_name: string, last_name: string, phone: string, email: string, password: string, password_confirm: string) => Promise<void>;
   logout: () => void;
   setAccessToken: (token: string) => void;
   setUser: (user: User | null) => void;
@@ -75,7 +75,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     first_name: string,
     last_name: string,
     phone: string,
-    gmail: string,
+    email: string,
     password: string,
     password_confirm: string
   ) => {
@@ -86,7 +86,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         first_name,
         last_name,
         phone,
-        gmail,
+        email,
         password,
         password_confirm,
       });

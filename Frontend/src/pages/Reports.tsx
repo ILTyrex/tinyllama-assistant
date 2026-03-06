@@ -1,13 +1,14 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Download, FileText, Search, Filter } from "lucide-react";
+import { Download, FileText, Search, Filter, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AppLayout } from "@/components/AppLayout";
-import { mockEnrollments, mockCourses } from "@/lib/mock-courses";
+import { mockEnrollments } from "@/lib/mock-courses";
+import CourseAPI, { Course } from "@/api/courses.api";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Reports() {
@@ -15,6 +16,24 @@ export default function Reports() {
   const [search, setSearch] = useState("");
   const [courseFilter, setCourseFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [loadingCourses, setLoadingCourses] = useState(false);
+
+  useEffect(() => {
+    loadCourses();
+  }, []);
+
+  const loadCourses = async () => {
+    try {
+      setLoadingCourses(true);
+      const data = await CourseAPI.getCourses();
+      setCourses(data);
+    } catch (error) {
+      console.error("Error loading courses", error);
+    } finally {
+      setLoadingCourses(false);
+    }
+  };
 
   const filtered = useMemo(() => {
     return mockEnrollments.filter((e) => {
@@ -65,14 +84,14 @@ export default function Reports() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input placeholder="Buscar estudiante o código..." className="pl-10 bg-card border-border" value={search} onChange={(e) => setSearch(e.target.value)} />
             </div>
-            <Select value={courseFilter} onValueChange={setCourseFilter}>
+            <Select value={courseFilter} onValueChange={setCourseFilter} disabled={loadingCourses}>
               <SelectTrigger className="w-48 bg-card border-border">
                 <SelectValue placeholder="Curso" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos los cursos</SelectItem>
-                {mockCourses.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>{c.code} — {c.name}</SelectItem>
+                {courses.map((c) => (
+                  <SelectItem key={c.id} value={c.id.toString()}>{c.code} — {c.name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>

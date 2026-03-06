@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
-  LayoutDashboard, BookOpen, ClipboardList, FileBarChart,
+  LayoutDashboard, BookOpen, FileBarChart,
   UserCircle, Settings, HelpCircle, MessageSquare, LogOut, ChevronLeft, ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -10,14 +10,13 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 
 const navItems = [
-  { label: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
-  { label: "Cursos Electivos", icon: BookOpen, path: "/courses" },
-  { label: "Inscripción", icon: ClipboardList, path: "/enrollment" },
-  { label: "Reportes", icon: FileBarChart, path: "/reports" },
-  { label: "Chat IA", icon: MessageSquare, path: "/chat" },
-  { label: "Perfil", icon: UserCircle, path: "/profile" },
-  { label: "Configuración", icon: Settings, path: "/admin" },
-  { label: "Ayuda", icon: HelpCircle, path: "/help" },
+  { label: "Dashboard", icon: LayoutDashboard, path: "/dashboard", roles: ["student", "admin"] },
+  { label: "Cursos Electivos", icon: BookOpen, path: "/courses", roles: ["student", "admin"] },
+  { label: "Chat IA", icon: MessageSquare, path: "/chat", roles: ["student", "admin"] },
+  { label: "Reportes", icon: FileBarChart, path: "/reports", roles: ["admin"] },
+  { label: "Perfil", icon: UserCircle, path: "/profile", roles: ["student", "admin"] },
+  { label: "Configuración", icon: Settings, path: "/admin", roles: ["admin"] },
+  { label: "Ayuda", icon: HelpCircle, path: "/help", roles: ["student", "admin"] },
 ];
 
 interface AppLayoutProps {
@@ -27,8 +26,14 @@ interface AppLayoutProps {
 export function AppLayout({ children }: AppLayoutProps) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
+
+  // Filtrar items según el rol del usuario
+  const visibleItems = navItems.filter(item => {
+    if (!user?.role) return false;
+    return item.roles.includes(user.role);
+  });
 
   return (
     <div className="h-screen flex bg-background">
@@ -53,7 +58,7 @@ export function AppLayout({ children }: AppLayoutProps) {
 
         {/* Nav */}
         <nav className="flex-1 py-3 px-2 space-y-0.5 overflow-y-auto scrollbar-thin">
-          {navItems.map((item) => {
+          {visibleItems.map((item) => {
             const active = location.pathname === item.path;
             return (
               <button

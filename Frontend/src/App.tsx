@@ -11,7 +11,6 @@ import Chat from "./pages/Chat";
 import History from "./pages/History";
 import Dashboard from "./pages/Dashboard";
 import Courses from "./pages/Courses";
-import EnrollmentPage from "./pages/Enrollment";
 import Reports from "./pages/Reports";
 import Profile from "./pages/Profile";
 import Admin from "./pages/Admin";
@@ -33,6 +32,7 @@ const App = () => (
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             
             {/* Protected Routes */}
+            {/* Vistas accesibles para todos */}
             <Route
               path="/dashboard"
               element={
@@ -51,19 +51,7 @@ const App = () => (
             />
             <Route
               path="/enrollment"
-              element={
-                <ProtectedRoute>
-                  <EnrollmentPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/reports"
-              element={
-                <ProtectedRoute>
-                  <Reports />
-                </ProtectedRoute>
-              }
+              element={<Navigate to="/courses" replace />}
             />
             <Route
               path="/chat"
@@ -90,18 +78,28 @@ const App = () => (
               }
             />
             <Route
-              path="/admin"
-              element={
-                <ProtectedRoute>
-                  <Admin />
-                </ProtectedRoute>
-              }
-            />
-            <Route
               path="/help"
               element={
                 <ProtectedRoute>
                   <Help />
+                </ProtectedRoute>
+              }
+            />
+            
+            {/* Vistas solo para Administrador */}
+            <Route
+              path="/reports"
+              element={
+                <ProtectedRoute requiredRoles={["admin"]}>
+                  <Reports />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute requiredRoles={["admin"]}>
+                  <Admin />
                 </ProtectedRoute>
               }
             />

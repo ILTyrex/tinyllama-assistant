@@ -1,51 +1,73 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Plus, Edit, Save, Trash2, Activity, Settings2 } from "lucide-react";
+import { Plus, Edit, Trash2, Activity, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AppLayout } from "@/components/AppLayout";
-import { mockCourses, mockActivityLogs, Course } from "@/lib/mock-courses";
+import { mockActivityLogs } from "@/lib/mock-courses";
 import { useToast } from "@/hooks/use-toast";
+import CourseAPI, { Course } from "@/api/courses.api";
+import { CreateCourseDialog } from "@/components/courses/CreateCourseDialog";
 
 export default function Admin() {
   const { toast } = useToast();
-  const [courses, setCourses] = useState(mockCourses);
+  const [courses, setCourses] = useState<Course[]>([]);
   const [editCourse, setEditCourse] = useState<Course | null>(null);
   const [showCreate, setShowCreate] = useState(false);
-  const [newCourse, setNewCourse] = useState({ name: "", code: "", teacher: "", totalSlots: 30 });
+  const [loading, setLoading] = useState(false);
 
-  const handleSaveSlots = (id: string, slots: number) => {
-    setCourses((prev) => prev.map((c) => (c.id === id ? { ...c, totalSlots: slots } : c)));
-    toast({ title: "Cupos actualizados" });
+  // Cargar cursos al montar el componente
+  useEffect(() => {
+    loadCourses();
+  }, []);
+
+  const loadCourses = async () => {
+    try {
+      setLoading(true);
+      const data = await CourseAPI.getCourses();
+      setCourses(data);
+    } catch (error) {
+      toast({ title: "Error", description: "No se pudieron cargar los cursos" });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleCreate = () => {
-    const course: Course = {
-      id: `c-${Date.now()}`,
-      name: newCourse.name,
-      code: newCourse.code,
-      description: "Nuevo curso por configurar",
-      teacher: newCourse.teacher,
-      schedule: "Por definir",
-      requirements: [],
-      totalSlots: newCourse.totalSlots,
-      enrolledCount: 0,
-      status: "open",
-      category: "General",
-      startDate: new Date(),
-      endDate: new Date(),
-      credits: 3,
-    };
+  const handleCourseCreated = (course: Course) => {
     setCourses((prev) => [course, ...prev]);
-    setShowCreate(false);
-    setNewCourse({ name: "", code: "", teacher: "", totalSlots: 30 });
     toast({ title: "Curso creado", description: course.name });
+  };
+
+  const handleCourseUpdated = (updated: Course) => {
+    setCourses((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
+    toast({ title: "Curso actualizado", description: updated.name });
+  };
+
+  const handleDialogOpenChange = (open: boolean) => {
+    if (!open) {
+      setEditCourse(null);
+    }
+    setShowCreate(open);
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm("¿Estás seguro de que deseas eliminar este curso?")) return;
+
+    try {
+      setLoading(true);
+      await CourseAPI.deleteCourse(id);
+      setCourses((prev) => prev.filter((c) => c.id !== id));
+      toast({ title: "Curso eliminado" });
+    } catch (error) {
+      toast({ title: "Error", description: "No se pudo eliminar el curso" });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -56,8 +78,16 @@ export default function Admin() {
             <h1 className="text-2xl font-display font-bold text-foreground">Configuración</h1>
             <p className="text-sm text-muted-foreground mt-1">Administración de cursos y sistema</p>
           </div>
-          <Button onClick={() => setShowCreate(true)} className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2">
-            <Plus className="w-4 h-4" /> Crear curso
+          <Button
+            onClick={() => {
+              setEditCourse(null);
+              setShowCreate(true);
+            }}
+            disabled={loading}
+            className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2"
+          >
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+            Crear curso
           </Button>
         </div>
 
@@ -70,45 +100,60 @@ export default function Admin() {
 
             <TabsContent value="cursos">
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass-surface overflow-hidden" style={{ boxShadow: "var(--shadow-card)" }}>
-                <Table>
-                  <TableHeader>
-                    <TableRow className="border-border hover:bg-transparent">
-                      <TableHead className="text-muted-foreground">Código</TableHead>
-                      <TableHead className="text-muted-foreground">Nombre</TableHead>
-                      <TableHead className="text-muted-foreground">Docente</TableHead>
-                      <TableHead className="text-muted-foreground">Cupos</TableHead>
-                      <TableHead className="text-muted-foreground">Inscritos</TableHead>
-                      <TableHead className="text-muted-foreground">Estado</TableHead>
-                      <TableHead className="text-muted-foreground w-24">Acciones</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {courses.map((c) => (
-                      <TableRow key={c.id} className="border-border hover:bg-secondary/30">
-                        <TableCell className="font-mono text-sm text-foreground">{c.code}</TableCell>
-                        <TableCell className="text-sm text-foreground">{c.name}</TableCell>
-                        <TableCell className="text-sm text-muted-foreground">{c.teacher}</TableCell>
-                        <TableCell className="text-sm text-foreground">{c.totalSlots}</TableCell>
-                        <TableCell className="text-sm text-foreground">{c.enrolledCount}</TableCell>
-                        <TableCell>
-                          <Badge variant="secondary" className={`text-[10px] ${c.status === "full" ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary"}`}>
-                            {c.status === "full" ? "Lleno" : "Abierto"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-1">
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={() => setEditCourse(c)}>
-                              <Edit className="w-3.5 h-3.5" />
-                            </Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive">
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </Button>
-                          </div>
-                        </TableCell>
+                {loading && courses.length === 0 ? (
+                  <div className="flex items-center justify-center h-64">
+                    <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="border-border hover:bg-transparent">
+                        <TableHead className="text-muted-foreground">Código</TableHead>
+                        <TableHead className="text-muted-foreground">Nombre</TableHead>
+                        <TableHead className="text-muted-foreground">Créditos</TableHead>
+                        <TableHead className="text-muted-foreground">Cupos</TableHead>
+                        <TableHead className="text-muted-foreground">Ocupados</TableHead>
+                        <TableHead className="text-muted-foreground">Estado</TableHead>
+                        <TableHead className="text-muted-foreground w-24">Acciones</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {courses.map((c, idx) => (
+                        <TableRow key={c.id ?? idx} className="border-border hover:bg-secondary/30">
+                          <TableCell className="font-mono text-sm text-foreground">{c.code}</TableCell>
+                          <TableCell className="text-sm text-foreground">{c.name}</TableCell>
+                          <TableCell className="text-sm text-foreground">{c.credits}</TableCell>
+                          <TableCell className="text-sm text-foreground">{c.slots}</TableCell>
+                          <TableCell className="text-sm text-foreground">{c.occupied_slots}</TableCell>
+                          <TableCell>
+                            <Badge variant="secondary" className={`text-[10px] ${c.status === "closed" ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary"}`}>
+                              {c.status === "closed" ? "Cerrado" : "Abierto"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                                onClick={() => {
+                                  setEditCourse(c);
+                                  setShowCreate(true);
+                                }}
+                                disabled={loading}
+                              >
+                                <Edit className="w-3.5 h-3.5" />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => handleDelete(c.id)} disabled={loading}>
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
               </motion.div>
             </TabsContent>
 
@@ -135,70 +180,14 @@ export default function Admin() {
         </div>
       </div>
 
-      {/* Edit course modal */}
-      <Dialog open={!!editCourse} onOpenChange={() => setEditCourse(null)}>
-        <DialogContent className="bg-card border-border">
-          <DialogHeader>
-            <DialogTitle className="text-foreground font-display">Editar cupos — {editCourse?.code}</DialogTitle>
-          </DialogHeader>
-          {editCourse && (
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label className="text-foreground">Total de cupos</Label>
-                <Input
-                  type="number"
-                  className="bg-input border-border"
-                  value={editCourse.totalSlots}
-                  onChange={(e) => setEditCourse({ ...editCourse, totalSlots: Number(e.target.value) })}
-                />
-              </div>
-              <p className="text-xs text-muted-foreground">Inscritos actuales: {editCourse.enrolledCount}</p>
-            </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditCourse(null)} className="border-border text-foreground">Cancelar</Button>
-            <Button
-              onClick={() => { if (editCourse) { handleSaveSlots(editCourse.id, editCourse.totalSlots); setEditCourse(null); } }}
-              className="bg-primary text-primary-foreground hover:bg-primary/90"
-            >
-              <Save className="w-4 h-4 mr-2" /> Guardar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
-      {/* Create course modal */}
-      <Dialog open={showCreate} onOpenChange={setShowCreate}>
-        <DialogContent className="bg-card border-border">
-          <DialogHeader>
-            <DialogTitle className="text-foreground font-display">Crear nuevo curso</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            {[
-              { key: "name", label: "Nombre del curso", type: "text" },
-              { key: "code", label: "Código", type: "text" },
-              { key: "teacher", label: "Docente", type: "text" },
-              { key: "totalSlots", label: "Cupos totales", type: "number" },
-            ].map((f) => (
-              <div key={f.key} className="space-y-2">
-                <Label className="text-foreground">{f.label}</Label>
-                <Input
-                  type={f.type}
-                  className="bg-input border-border"
-                  value={newCourse[f.key as keyof typeof newCourse]}
-                  onChange={(e) => setNewCourse((p) => ({ ...p, [f.key]: f.type === "number" ? Number(e.target.value) : e.target.value }))}
-                />
-              </div>
-            ))}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCreate(false)} className="border-border text-foreground">Cancelar</Button>
-            <Button onClick={handleCreate} disabled={!newCourse.name || !newCourse.code} className="bg-primary text-primary-foreground hover:bg-primary/90">
-              Crear curso
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <CreateCourseDialog
+        open={showCreate}
+        onOpenChange={handleDialogOpenChange}
+        courseToEdit={editCourse}
+        onCreated={handleCourseCreated}
+        onUpdated={handleCourseUpdated}
+      />
     </AppLayout>
   );
 }

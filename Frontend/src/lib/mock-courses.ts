@@ -1,18 +1,15 @@
 export interface Course {
-  id: string;
+  id: number;
   name: string;
   code: string;
   description: string;
-  teacher: string;
-  schedule: string;
-  requirements: string[];
-  totalSlots: number;
-  enrolledCount: number;
-  status: "open" | "closed" | "full";
-  category: string;
-  startDate: Date;
-  endDate: Date;
   credits: number;
+  semester: number;
+  slots: number;
+  occupied_slots: number;
+  status: "open" | "closed";
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Enrollment {
@@ -44,105 +41,6 @@ export interface ActivityLog {
   timestamp: Date;
   user: string;
 }
-
-export const mockCourses: Course[] = [
-  {
-    id: "c1",
-    name: "Inteligencia Artificial Aplicada",
-    code: "IA-401",
-    description: "Curso avanzado que cubre redes neuronales, aprendizaje profundo, procesamiento de lenguaje natural y visión por computadora. Los estudiantes desarrollarán proyectos prácticos con TensorFlow y PyTorch.",
-    teacher: "Dra. María González",
-    schedule: "Lunes y Miércoles 10:00 - 12:00",
-    requirements: ["Programación III", "Estadística II", "Álgebra Lineal"],
-    totalSlots: 35,
-    enrolledCount: 33,
-    status: "open",
-    category: "Tecnología",
-    startDate: new Date("2026-03-15"),
-    endDate: new Date("2026-07-15"),
-    credits: 4,
-  },
-  {
-    id: "c2",
-    name: "Diseño UX/UI Avanzado",
-    code: "DUX-302",
-    description: "Metodologías de investigación de usuarios, prototipado de alta fidelidad, sistemas de diseño y pruebas de usabilidad. Se trabajará con Figma y herramientas de análisis.",
-    teacher: "Prof. Carlos Ruiz",
-    schedule: "Martes y Jueves 14:00 - 16:00",
-    requirements: ["Diseño Gráfico I", "HCI Fundamentos"],
-    totalSlots: 30,
-    enrolledCount: 18,
-    status: "open",
-    category: "Diseño",
-    startDate: new Date("2026-03-15"),
-    endDate: new Date("2026-07-15"),
-    credits: 3,
-  },
-  {
-    id: "c3",
-    name: "Ciberseguridad Empresarial",
-    code: "CSE-405",
-    description: "Auditoría de seguridad, pentesting, criptografía aplicada, gestión de incidentes y cumplimiento normativo (ISO 27001, GDPR).",
-    teacher: "Ing. Roberto Méndez",
-    schedule: "Viernes 08:00 - 12:00",
-    requirements: ["Redes II", "Sistemas Operativos"],
-    totalSlots: 25,
-    enrolledCount: 25,
-    status: "full",
-    category: "Tecnología",
-    startDate: new Date("2026-03-15"),
-    endDate: new Date("2026-07-15"),
-    credits: 4,
-  },
-  {
-    id: "c4",
-    name: "Marketing Digital y Analytics",
-    code: "MKD-201",
-    description: "Estrategias de marketing digital, SEO/SEM, analítica web con Google Analytics, publicidad programática y gestión de redes sociales.",
-    teacher: "Lic. Ana Torres",
-    schedule: "Lunes y Miércoles 16:00 - 18:00",
-    requirements: ["Fundamentos de Marketing"],
-    totalSlots: 40,
-    enrolledCount: 12,
-    status: "open",
-    category: "Negocios",
-    startDate: new Date("2026-04-01"),
-    endDate: new Date("2026-07-30"),
-    credits: 3,
-  },
-  {
-    id: "c5",
-    name: "Desarrollo Mobile con Flutter",
-    code: "MOB-303",
-    description: "Desarrollo de aplicaciones multiplataforma con Flutter y Dart. Incluye integración con APIs, bases de datos locales y publicación en stores.",
-    teacher: "Ing. Luis Vargas",
-    schedule: "Martes y Jueves 10:00 - 12:00",
-    requirements: ["Programación II", "Bases de Datos I"],
-    totalSlots: 30,
-    enrolledCount: 27,
-    status: "open",
-    category: "Tecnología",
-    startDate: new Date("2026-03-15"),
-    endDate: new Date("2026-07-15"),
-    credits: 4,
-  },
-  {
-    id: "c6",
-    name: "Gestión Ágil de Proyectos",
-    code: "GAP-202",
-    description: "Scrum, Kanban, SAFe y herramientas de gestión. Certificación preparatoria para Scrum Master.",
-    teacher: "MBA. Patricia López",
-    schedule: "Sábado 09:00 - 13:00",
-    requirements: [],
-    totalSlots: 45,
-    enrolledCount: 8,
-    status: "open",
-    category: "Negocios",
-    startDate: new Date("2026-04-05"),
-    endDate: new Date("2026-08-05"),
-    credits: 2,
-  },
-];
 
 export const mockEnrollments: Enrollment[] = [
   { id: "e1", courseId: "c1", courseName: "Inteligencia Artificial Aplicada", courseCode: "IA-401", studentName: "Juan Pérez", studentEmail: "juan@uni.edu", enrolledAt: new Date("2026-02-20"), status: "active" },
