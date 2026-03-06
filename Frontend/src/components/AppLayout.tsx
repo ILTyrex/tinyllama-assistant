@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -13,9 +13,9 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import { ChatWidget } from "@/components/chat/ChatWidget";
 
 const navItems = [
   {
@@ -54,7 +54,11 @@ export function AppLayout({ children }: AppLayoutProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const { logout, user } = useAuth();
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("sidebarCollapsed") === "true";
+  });
+  const [showChatWidget, setShowChatWidget] = useState(false);
 
   // Filtrar items según el rol del usuario
   const visibleItems = navItems.filter((item) => {
@@ -114,7 +118,15 @@ export function AppLayout({ children }: AppLayoutProps) {
         {/* Footer */}
         <div className="p-2 border-t border-sidebar-border space-y-1">
           <button
-            onClick={() => setCollapsed(!collapsed)}
+            onClick={() => {
+              setCollapsed((prev) => {
+                const next = !prev;
+                if (typeof window !== "undefined") {
+                  localStorage.setItem("sidebarCollapsed", String(next));
+                }
+                return next;
+              });
+            }}
             className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-sidebar-accent/50 hover:text-foreground transition-colors"
           >
             {collapsed ? (
@@ -129,7 +141,7 @@ export function AppLayout({ children }: AppLayoutProps) {
             className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-sidebar-accent/50 hover:text-foreground transition-colors"
           >
             <LogOut className="w-4 h-4" />
-            {!collapsed && <span>Salir</span>}
+            {!collapsed && <span>Cerrar Sesión</span>}
           </button>
         </div>
       </aside>
@@ -140,15 +152,20 @@ export function AppLayout({ children }: AppLayoutProps) {
       </main>
 
       {/* Floating Chat Button */}
-      {location.pathname !== "/chat" && (
+      {location.pathname !== "/chat" && !showChatWidget && (
         <button
-          onClick={() => navigate("/chat")}
+          onClick={() => setShowChatWidget(true)}
           className="fixed bottom-4 right-4 w-12 h-12 bg-primary text-primary-foreground rounded-full flex items-center justify-center shadow-lg hover:bg-primary/90 transition-colors"
           title="Chat IA"
         >
           <MessageSquare className="w-6 h-6" />
         </button>
       )}
+
+      <ChatWidget
+        open={showChatWidget}
+        onClose={() => setShowChatWidget(false)}
+      />
     </div>
   );
 }

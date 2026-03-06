@@ -92,7 +92,7 @@ export function ChatSidebar({
           className="w-full text-left px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-sidebar-accent/50 transition-colors flex items-center gap-2"
         >
           <LogOut className="w-3.5 h-3.5" />
-          Cerrar sesión
+          Salir
         </button>
       </div>
     </div>
