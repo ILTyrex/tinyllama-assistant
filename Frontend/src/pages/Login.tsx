@@ -50,7 +50,9 @@ export default function Login() {
       navigate("/dashboard");
     } catch (error: any) {
       setErrors({
-        general: error.message || "Error al iniciar sesión. Verifica tus credenciales.",
+        general:
+          error.message ||
+          "Error al iniciar sesión. Verifica tus credenciales.",
       });
     } finally {
       setLoading(false);

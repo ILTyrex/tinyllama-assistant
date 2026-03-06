@@ -7,8 +7,11 @@ import { AppLayout } from "@/components/AppLayout";
 import { mockConversations, Message, Conversation } from "@/lib/mock-data";
 
 export default function Chat() {
-  const [conversations, setConversations] = useState<Conversation[]>(mockConversations);
-  const [activeId, setActiveId] = useState<string | null>(mockConversations[0]?.id ?? null);
+  const [conversations, setConversations] =
+    useState<Conversation[]>(mockConversations);
+  const [activeId, setActiveId] = useState<string | null>(
+    mockConversations[0]?.id ?? null,
+  );
   const [isTyping, setIsTyping] = useState(false);
   const [isSending, setIsSending] = useState(false);
 
@@ -27,9 +30,13 @@ export default function Chat() {
       setConversations((prev) =>
         prev.map((c) =>
           c.id === activeId
-            ? { ...c, messages: [...c.messages, userMsg], messageCount: c.messageCount + 1 }
-            : c
-        )
+            ? {
+                ...c,
+                messages: [...c.messages, userMsg],
+                messageCount: c.messageCount + 1,
+              }
+            : c,
+        ),
       );
 
       setIsSending(true);
@@ -48,15 +55,19 @@ export default function Chat() {
       setConversations((prev) =>
         prev.map((c) =>
           c.id === activeId
-            ? { ...c, messages: [...c.messages, assistantMsg], messageCount: c.messageCount + 1 }
-            : c
-        )
+            ? {
+                ...c,
+                messages: [...c.messages, assistantMsg],
+                messageCount: c.messageCount + 1,
+              }
+            : c,
+        ),
       );
 
       setIsTyping(false);
       setIsSending(false);
     },
-    [activeId]
+    [activeId],
   );
 
   const handleNew = () => {
@@ -76,39 +87,46 @@ export default function Chat() {
   const handleReset = () => {
     if (!activeId) return;
     setConversations((prev) =>
-      prev.map((c) => (c.id === activeId ? { ...c, messages: [], messageCount: 0 } : c))
+      prev.map((c) =>
+        c.id === activeId ? { ...c, messages: [], messageCount: 0 } : c,
+      ),
     );
   };
 
   return (
     <AppLayout>
       <div className="flex-1 flex h-full">
-      <ChatSidebar
-        conversations={conversations}
-        activeId={activeId}
-        onSelect={setActiveId}
-        onNew={handleNew}
-      />
+        <ChatSidebar
+          conversations={conversations}
+          activeId={activeId}
+          onSelect={setActiveId}
+          onNew={handleNew}
+        />
 
-      {/* Chat central */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Header */}
-        <div className="h-14 border-b border-border flex items-center px-4">
-          <h2 className="font-display font-semibold text-foreground truncate">
-            {active?.title ?? "NexusChat"}
-          </h2>
-          {active && (
-            <span className="ml-3 text-xs text-muted-foreground">
-              {active.messageCount} mensajes
-            </span>
-          )}
+        {/* Chat central */}
+        <div className="flex-1 flex flex-col min-w-0">
+          {/* Header */}
+          <div className="h-14 border-b border-border flex items-center px-4">
+            <h2 className="font-display font-semibold text-foreground truncate">
+              {active?.title ?? "NexusChat"}
+            </h2>
+            {active && (
+              <span className="ml-3 text-xs text-muted-foreground">
+                {active.messageCount} mensajes
+              </span>
+            )}
+          </div>
+
+          <ChatMessages messages={active?.messages ?? []} isTyping={isTyping} />
+          <ChatInput
+            onSend={handleSend}
+            onReset={handleReset}
+            disabled={isSending}
+            loading={isSending}
+          />
         </div>
 
-        <ChatMessages messages={active?.messages ?? []} isTyping={isTyping} />
-        <ChatInput onSend={handleSend} onReset={handleReset} disabled={isSending} loading={isSending} />
-      </div>
-
-      <RightPanel conversation={active} />
+        <RightPanel conversation={active} />
       </div>
     </AppLayout>
   );

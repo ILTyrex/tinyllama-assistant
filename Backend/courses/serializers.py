@@ -10,22 +10,22 @@ class CourseSerializer(serializers.ModelSerializer):
     class Meta:
         model = Course
         fields = [
-            'id',
-            'code',
-            'name',
-            'description',
-            'credits',
-            'semester',
-            'prerequisites',
-            'slots',
-            'occupied_slots',
-            'enrolled_count',
-            'available_slots',
-            'status',
-            'created_at',
-            'updated_at',
+            "id",
+            "code",
+            "name",
+            "description",
+            "credits",
+            "semester",
+            "prerequisites",
+            "slots",
+            "occupied_slots",
+            "enrolled_count",
+            "available_slots",
+            "status",
+            "created_at",
+            "updated_at",
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at']
+        read_only_fields = ["id", "created_at", "updated_at"]
 
     def get_enrolled_count(self, obj):
         return obj.occupied_slots
@@ -35,20 +35,22 @@ class CourseSerializer(serializers.ModelSerializer):
 
 
 class CourseCreateUpdateSerializer(serializers.ModelSerializer):
-    prerequisites = serializers.PrimaryKeyRelatedField(many=True, queryset=Course.objects.all(), required=False)
+    prerequisites = serializers.PrimaryKeyRelatedField(
+        many=True, queryset=Course.objects.all(), required=False
+    )
 
     class Meta:
         model = Course
         fields = [
-            'code',
-            'name',
-            'description',
-            'credits',
-            'semester',
-            'prerequisites',
-            'slots',
-            'occupied_slots',
-            'status',
+            "code",
+            "name",
+            "description",
+            "credits",
+            "semester",
+            "prerequisites",
+            "slots",
+            "occupied_slots",
+            "status",
         ]
 
     def validate_code(self, value):

@@ -30,7 +30,7 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            
+
             {/* Protected Routes */}
             {/* Vistas accesibles para todos */}
             <Route
@@ -85,7 +85,7 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
-            
+
             {/* Vistas solo para Administrador */}
             <Route
               path="/reports"

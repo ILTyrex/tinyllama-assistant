@@ -38,15 +38,19 @@ export default function Register() {
 
   const validate = () => {
     const e: Record<string, string> = {};
-    if (!form.identification.trim()) e.identification = "La identificación es obligatoria";
-    else if (!/^\d+$/.test(form.identification)) e.identification = "Identificación inválida";
+    if (!form.identification.trim())
+      e.identification = "La identificación es obligatoria";
+    else if (!/^\d+$/.test(form.identification))
+      e.identification = "Identificación inválida";
     if (!form.first_name.trim()) e.first_name = "El nombre es obligatorio";
     if (!form.last_name.trim()) e.last_name = "El apellido es obligatorio";
     if (form.phone && !/^\d+$/.test(form.phone)) e.phone = "Teléfono inválido";
-    if (form.email && !/\S+@\S+\.\S+/.test(form.email)) e.email = "Correo inválido";
+    if (form.email && !/\S+@\S+\.\S+/.test(form.email))
+      e.email = "Correo inválido";
     if (!form.password) e.password = "La contraseña es obligatoria";
     else if (form.password.length < 6) e.password = "Mínimo 6 caracteres";
-    if (form.password !== form.password_confirm) e.password_confirm = "Las contraseñas no coinciden";
+    if (form.password !== form.password_confirm)
+      e.password_confirm = "Las contraseñas no coinciden";
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -64,7 +68,7 @@ export default function Register() {
         form.phone,
         form.email,
         form.password,
-        form.password_confirm
+        form.password_confirm,
       );
       navigate("/dashboard");
     } catch (error: any) {
@@ -77,13 +81,55 @@ export default function Register() {
   };
 
   const fields = [
-    { key: "identification", label: "Identificación", icon: User, type: "text", placeholder: "1234567890" },
-    { key: "first_name", label: "Nombre", icon: User, type: "text", placeholder: "Juan" },
-    { key: "last_name", label: "Apellido", icon: User, type: "text", placeholder: "Pérez" },
-    { key: "phone", label: "Teléfono", icon: User, type: "text", placeholder: "3001234567" },
-    { key: "email", label: "Correo electrónico", icon: Mail, type: "email", placeholder: "usuario@example.com" },
-    { key: "password", label: "Contraseña", icon: Lock, type: "password", placeholder: "••••••••" },
-    { key: "password_confirm", label: "Confirmar contraseña", icon: Lock, type: "password", placeholder: "••••••••" },
+    {
+      key: "identification",
+      label: "Identificación",
+      icon: User,
+      type: "text",
+      placeholder: "1234567890",
+    },
+    {
+      key: "first_name",
+      label: "Nombre",
+      icon: User,
+      type: "text",
+      placeholder: "Juan",
+    },
+    {
+      key: "last_name",
+      label: "Apellido",
+      icon: User,
+      type: "text",
+      placeholder: "Pérez",
+    },
+    {
+      key: "phone",
+      label: "Teléfono",
+      icon: User,
+      type: "text",
+      placeholder: "3001234567",
+    },
+    {
+      key: "email",
+      label: "Correo electrónico",
+      icon: Mail,
+      type: "email",
+      placeholder: "usuario@example.com",
+    },
+    {
+      key: "password",
+      label: "Contraseña",
+      icon: Lock,
+      type: "password",
+      placeholder: "••••••••",
+    },
+    {
+      key: "password_confirm",
+      label: "Confirmar contraseña",
+      icon: Lock,
+      type: "password",
+      placeholder: "••••••••",
+    },
   ];
 
   return (
@@ -100,11 +146,16 @@ export default function Register() {
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10 border border-primary/20 mb-4">
             <BookOpen className="w-7 h-7 text-primary" />
           </div>
-          <h1 className="text-3xl font-bold font-display gradient-text">Crear cuenta</h1>
+          <h1 className="text-3xl font-bold font-display gradient-text">
+            Crear cuenta
+          </h1>
           <p className="text-muted-foreground mt-1">Únete a AcademiaPro</p>
         </div>
 
-        <div className="glass-surface p-8 shadow-lg" style={{ boxShadow: "var(--shadow-card)" }}>
+        <div
+          className="glass-surface p-8 shadow-lg"
+          style={{ boxShadow: "var(--shadow-card)" }}
+        >
           <form onSubmit={handleSubmit} className="space-y-4">
             {errors.general && (
               <motion.div

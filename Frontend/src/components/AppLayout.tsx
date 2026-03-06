@@ -1,8 +1,16 @@
 import { ReactNode } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
-  LayoutDashboard, BookOpen, FileBarChart,
-  UserCircle, Settings, HelpCircle, MessageSquare, LogOut, ChevronLeft, ChevronRight,
+  LayoutDashboard,
+  BookOpen,
+  FileBarChart,
+  UserCircle,
+  Settings,
+  HelpCircle,
+  MessageSquare,
+  LogOut,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -10,13 +18,38 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 
 const navItems = [
-  { label: "Dashboard", icon: LayoutDashboard, path: "/dashboard", roles: ["student", "admin"] },
-  { label: "Cursos Electivos", icon: BookOpen, path: "/courses", roles: ["student", "admin"] },
-  { label: "Chat IA", icon: MessageSquare, path: "/chat", roles: ["student", "admin"] },
+  {
+    label: "Dashboard",
+    icon: LayoutDashboard,
+    path: "/dashboard",
+    roles: ["student", "admin"],
+  },
+  {
+    label: "Cursos Electivos",
+    icon: BookOpen,
+    path: "/courses",
+    roles: ["student", "admin"],
+  },
+  {
+    label: "Chat IA",
+    icon: MessageSquare,
+    path: "/chat",
+    roles: ["student", "admin"],
+  },
   { label: "Reportes", icon: FileBarChart, path: "/reports", roles: ["admin"] },
-  { label: "Perfil", icon: UserCircle, path: "/profile", roles: ["student", "admin"] },
+  {
+    label: "Perfil",
+    icon: UserCircle,
+    path: "/profile",
+    roles: ["student", "admin"],
+  },
   { label: "Configuración", icon: Settings, path: "/admin", roles: ["admin"] },
-  { label: "Ayuda", icon: HelpCircle, path: "/help", roles: ["student", "admin"] },
+  {
+    label: "Ayuda",
+    icon: HelpCircle,
+    path: "/help",
+    roles: ["student", "admin"],
+  },
 ];
 
 interface AppLayoutProps {
@@ -30,7 +63,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   const [collapsed, setCollapsed] = useState(false);
 
   // Filtrar items según el rol del usuario
-  const visibleItems = navItems.filter(item => {
+  const visibleItems = navItems.filter((item) => {
     if (!user?.role) return false;
     return item.roles.includes(user.role);
   });
@@ -41,7 +74,7 @@ export function AppLayout({ children }: AppLayoutProps) {
       <aside
         className={cn(
           "h-full flex flex-col bg-sidebar border-r border-sidebar-border transition-all duration-300",
-          collapsed ? "w-16" : "w-56"
+          collapsed ? "w-16" : "w-56",
         )}
       >
         {/* Logo */}
@@ -68,11 +101,16 @@ export function AppLayout({ children }: AppLayoutProps) {
                   "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors",
                   active
                     ? "bg-sidebar-accent text-primary font-medium"
-                    : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-foreground"
+                    : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-foreground",
                 )}
                 title={collapsed ? item.label : undefined}
               >
-                <item.icon className={cn("w-4 h-4 flex-shrink-0", active && "text-primary")} />
+                <item.icon
+                  className={cn(
+                    "w-4 h-4 flex-shrink-0",
+                    active && "text-primary",
+                  )}
+                />
                 {!collapsed && <span className="truncate">{item.label}</span>}
               </button>
             );
@@ -85,7 +123,11 @@ export function AppLayout({ children }: AppLayoutProps) {
             onClick={() => setCollapsed(!collapsed)}
             className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-sidebar-accent/50 hover:text-foreground transition-colors"
           >
-            {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+            {collapsed ? (
+              <ChevronRight className="w-4 h-4" />
+            ) : (
+              <ChevronLeft className="w-4 h-4" />
+            )}
             {!collapsed && <span>Colapsar</span>}
           </button>
           <button

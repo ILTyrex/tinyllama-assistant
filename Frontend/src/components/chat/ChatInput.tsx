@@ -10,7 +10,12 @@ interface ChatInputProps {
   loading?: boolean;
 }
 
-export function ChatInput({ onSend, onReset, disabled, loading }: ChatInputProps) {
+export function ChatInput({
+  onSend,
+  onReset,
+  disabled,
+  loading,
+}: ChatInputProps) {
   const [value, setValue] = useState("");
   const ref = useRef<HTMLTextAreaElement>(null);
 
@@ -37,7 +42,11 @@ export function ChatInput({ onSend, onReset, disabled, loading }: ChatInputProps
   return (
     <div className="p-4 border-t border-border">
       <div className="glass-surface flex items-end gap-2 p-2">
-        <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground h-9 w-9 flex-shrink-0">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="text-muted-foreground hover:text-foreground h-9 w-9 flex-shrink-0"
+        >
           <Paperclip className="h-4 w-4" />
         </Button>
 
@@ -68,7 +77,14 @@ export function ChatInput({ onSend, onReset, disabled, loading }: ChatInputProps
             disabled={!value.trim() || disabled}
             className="bg-primary text-primary-foreground hover:bg-primary/90 h-9 w-9"
           >
-            {loading ? <Spinner size="sm" className="border-primary-foreground/30 border-t-primary-foreground" /> : <Send className="h-4 w-4" />}
+            {loading ? (
+              <Spinner
+                size="sm"
+                className="border-primary-foreground/30 border-t-primary-foreground"
+              />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
           </Button>
         </div>
       </div>

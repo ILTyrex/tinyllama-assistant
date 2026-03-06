@@ -12,7 +12,9 @@ export function RightPanel({ conversation }: RightPanelProps) {
   if (!conversation) {
     return (
       <div className="w-72 h-full border-l border-border bg-card/50 flex items-center justify-center p-6">
-        <p className="text-muted-foreground text-sm text-center">Selecciona una conversación para ver detalles</p>
+        <p className="text-muted-foreground text-sm text-center">
+          Selecciona una conversación para ver detalles
+        </p>
       </div>
     );
   }
@@ -26,8 +28,9 @@ export function RightPanel({ conversation }: RightPanelProps) {
           Resumen
         </div>
         <p className="text-xs text-muted-foreground leading-relaxed">
-          Conversación sobre "{conversation.title}" con {conversation.messageCount} mensajes intercambiados.
-          Temas principales abordados en la discusión.
+          Conversación sobre "{conversation.title}" con{" "}
+          {conversation.messageCount} mensajes intercambiados. Temas principales
+          abordados en la discusión.
         </p>
       </div>
 
@@ -41,7 +44,11 @@ export function RightPanel({ conversation }: RightPanelProps) {
         </div>
         <div className="flex flex-wrap gap-1.5">
           {conversation.tags.map((tag) => (
-            <Badge key={tag} variant="secondary" className="text-xs bg-secondary text-secondary-foreground">
+            <Badge
+              key={tag}
+              variant="secondary"
+              className="text-xs bg-secondary text-secondary-foreground"
+            >
               {tag}
             </Badge>
           ))}
@@ -81,12 +88,17 @@ export function RightPanel({ conversation }: RightPanelProps) {
         </div>
         <div className="flex justify-between">
           <span className="text-muted-foreground">Fecha</span>
-          <span className="text-foreground">{conversation.date.toLocaleDateString("es")}</span>
+          <span className="text-foreground">
+            {conversation.date.toLocaleDateString("es")}
+          </span>
         </div>
       </div>
 
       <div className="mt-auto p-4">
-        <Button variant="outline" className="w-full gap-2 text-sm border-border text-foreground hover:bg-secondary">
+        <Button
+          variant="outline"
+          className="w-full gap-2 text-sm border-border text-foreground hover:bg-secondary"
+        >
           <Download className="w-4 h-4" />
           Exportar
         </Button>

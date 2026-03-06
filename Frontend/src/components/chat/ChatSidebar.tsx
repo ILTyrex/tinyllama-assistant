@@ -13,12 +13,17 @@ interface ChatSidebarProps {
   onNew: () => void;
 }
 
-export function ChatSidebar({ conversations, activeId, onSelect, onNew }: ChatSidebarProps) {
+export function ChatSidebar({
+  conversations,
+  activeId,
+  onSelect,
+  onNew,
+}: ChatSidebarProps) {
   const [search, setSearch] = useState("");
   const navigate = useNavigate();
 
   const filtered = conversations.filter((c) =>
-    c.title.toLowerCase().includes(search.toLowerCase())
+    c.title.toLowerCase().includes(search.toLowerCase()),
   );
 
   return (
@@ -28,7 +33,9 @@ export function ChatSidebar({ conversations, activeId, onSelect, onNew }: ChatSi
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <MessageSquare className="w-5 h-5 text-primary" />
-            <span className="font-display font-semibold text-foreground">NexusChat</span>
+            <span className="font-display font-semibold text-foreground">
+              NexusChat
+            </span>
           </div>
         </div>
 
@@ -61,11 +68,13 @@ export function ChatSidebar({ conversations, activeId, onSelect, onNew }: ChatSi
               "w-full text-left px-3 py-2.5 rounded-lg transition-colors group",
               activeId === conv.id
                 ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                : "text-sidebar-foreground hover:bg-sidebar-accent/50"
+                : "text-sidebar-foreground hover:bg-sidebar-accent/50",
             )}
           >
             <p className="text-sm font-medium truncate">{conv.title}</p>
-            <p className="text-xs text-muted-foreground truncate mt-0.5">{conv.snippet}</p>
+            <p className="text-xs text-muted-foreground truncate mt-0.5">
+              {conv.snippet}
+            </p>
           </button>
         ))}
       </div>

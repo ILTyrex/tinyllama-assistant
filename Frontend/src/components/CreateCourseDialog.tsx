@@ -1,13 +1,25 @@
 import { useEffect, useState } from "react";
 import { Plus, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import CourseAPI, { Course, CreateCoursePayload } from "@/api/courses.api";
-
 
 interface CreateCourseDialogProps {
   open: boolean;
@@ -17,7 +29,10 @@ interface CreateCourseDialogProps {
   courseToEdit?: Course | null;
 }
 
-type CourseFormState = Omit<CreateCoursePayload, "credits" | "semester" | "slots" | "occupied_slots" | "status"> & {
+type CourseFormState = Omit<
+  CreateCoursePayload,
+  "credits" | "semester" | "slots" | "occupied_slots" | "status"
+> & {
   credits: string;
   semester: string;
   slots: string;
@@ -37,7 +52,13 @@ const makeFormState = (course?: Course | null): CourseFormState => ({
   status: course?.status ?? "",
 });
 
-export function CreateCourseDialog({ open, onOpenChange, onCreated, onUpdated, courseToEdit }: CreateCourseDialogProps) {
+export function CreateCourseDialog({
+  open,
+  onOpenChange,
+  onCreated,
+  onUpdated,
+  courseToEdit,
+}: CreateCourseDialogProps) {
   const { toast } = useToast();
   const [course, setCourse] = useState<CourseFormState>(makeFormState());
   const [availableCourses, setAvailableCourses] = useState<Course[]>([]);
@@ -67,22 +88,34 @@ export function CreateCourseDialog({ open, onOpenChange, onCreated, onUpdated, c
 
   const handleSubmit = async () => {
     if (!course.name || !course.code || !course.description) {
-      toast({ title: "Error", description: "Nombre, código y descripción son obligatorios" });
+      toast({
+        title: "Error",
+        description: "Nombre, código y descripción son obligatorios",
+      });
       return;
     }
 
     if (!course.credits || Number(course.credits) <= 0) {
-      toast({ title: "Error", description: "Créditos debe ser un número mayor a 0" });
+      toast({
+        title: "Error",
+        description: "Créditos debe ser un número mayor a 0",
+      });
       return;
     }
 
     if (!course.semester || Number(course.semester) <= 0) {
-      toast({ title: "Error", description: "Semestre debe ser un número mayor a 0" });
+      toast({
+        title: "Error",
+        description: "Semestre debe ser un número mayor a 0",
+      });
       return;
     }
 
     if (!course.slots || Number(course.slots) <= 0) {
-      toast({ title: "Error", description: "Cupos totales debe ser un número mayor a 0" });
+      toast({
+        title: "Error",
+        description: "Cupos totales debe ser un número mayor a 0",
+      });
       return;
     }
 
@@ -115,7 +148,10 @@ export function CreateCourseDialog({ open, onOpenChange, onCreated, onUpdated, c
       onOpenChange(false);
     } catch (error: any) {
       if (error.status === 401) {
-        toast({ title: "No autorizado", description: "Inicia sesión para crear cursos" });
+        toast({
+          title: "No autorizado",
+          description: "Inicia sesión para crear cursos",
+        });
         return;
       }
 
@@ -124,9 +160,14 @@ export function CreateCourseDialog({ open, onOpenChange, onCreated, onUpdated, c
         typeof errors === "string"
           ? errors
           : Array.isArray(errors)
-          ? errors[0]
-          : Object.values(errors).flat()[0];
-      const message = firstError || error.message || (isEditMode ? "Error al actualizar el curso" : "Error al crear el curso");
+            ? errors[0]
+            : Object.values(errors).flat()[0];
+      const message =
+        firstError ||
+        error.message ||
+        (isEditMode
+          ? "Error al actualizar el curso"
+          : "Error al crear el curso");
       toast({ title: "Error", description: message });
     } finally {
       setLoading(false);
@@ -155,7 +196,11 @@ export function CreateCourseDialog({ open, onOpenChange, onCreated, onUpdated, c
             { key: "credits", label: "Créditos", type: "number" },
             { key: "semester", label: "Semestre", type: "number" },
             { key: "slots", label: "Cupos totales", type: "number" },
-            { key: "occupied_slots", label: "Ocupados iniciales", type: "number" },
+            {
+              key: "occupied_slots",
+              label: "Ocupados iniciales",
+              type: "number",
+            },
           ].map((f) => (
             <div key={f.key} className="space-y-2">
               <Label className="text-foreground">{f.label}</Label>
@@ -175,7 +220,9 @@ export function CreateCourseDialog({ open, onOpenChange, onCreated, onUpdated, c
           ))}
 
           <div className="space-y-2">
-            <Label className="text-foreground">Prerrequisitos (IDs separados por coma)</Label>
+            <Label className="text-foreground">
+              Prerrequisitos (IDs separados por coma)
+            </Label>
             <Input
               type="text"
               className="bg-input border-border"
@@ -197,7 +244,12 @@ export function CreateCourseDialog({ open, onOpenChange, onCreated, onUpdated, c
             <Label className="text-foreground">Estado</Label>
             <Select
               value={course.status}
-              onValueChange={(value) => setCourse((prev) => ({ ...prev, status: value as "open" | "closed" }))}
+              onValueChange={(value) =>
+                setCourse((prev) => ({
+                  ...prev,
+                  status: value as "open" | "closed",
+                }))
+              }
             >
               <SelectTrigger className="bg-input border-border">
                 <SelectValue placeholder="Seleccione el estado" />
@@ -211,11 +263,24 @@ export function CreateCourseDialog({ open, onOpenChange, onCreated, onUpdated, c
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} className="border-border text-foreground" disabled={loading}>
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            className="border-border text-foreground"
+            disabled={loading}
+          >
             Cancelar
           </Button>
-          <Button onClick={handleSubmit} disabled={loading} className="bg-primary text-primary-foreground hover:bg-primary/90">
-            {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Plus className="w-4 h-4 mr-2" />}
+          <Button
+            onClick={handleSubmit}
+            disabled={loading}
+            className="bg-primary text-primary-foreground hover:bg-primary/90"
+          >
+            {loading ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <Plus className="w-4 h-4 mr-2" />
+            )}
             {isEditMode ? "Guardar cambios" : "Crear curso"}
           </Button>
         </DialogFooter>

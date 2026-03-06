@@ -1,19 +1,19 @@
-import axios, { AxiosInstance } from 'axios';
+import axios, { AxiosInstance } from "axios";
 
-const API_BASE_URL = 'http://localhost:8000/api';
+const API_BASE_URL = "http://localhost:8000/api";
 
 // Crear instancia de axios reutilizando la configuración
 const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
 // Interceptor para agregar el token
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('accessToken');
+    const token = localStorage.getItem("accessToken");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -21,7 +21,7 @@ apiClient.interceptors.request.use(
   },
   (error) => {
     return Promise.reject(error);
-  }
+  },
 );
 
 // Interceptor para manejar 401
@@ -34,29 +34,29 @@ apiClient.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        const refreshToken = localStorage.getItem('refreshToken');
+        const refreshToken = localStorage.getItem("refreshToken");
         if (refreshToken) {
           const response = await axios.post(`${API_BASE_URL}/auth/refresh/`, {
             refresh: refreshToken,
           });
 
           const newAccessToken = response.data.access;
-          localStorage.setItem('accessToken', newAccessToken);
+          localStorage.setItem("accessToken", newAccessToken);
 
           originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
           return apiClient(originalRequest);
         }
       } catch (refreshError) {
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        localStorage.removeItem('user');
-        window.location.href = '/login';
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
+        localStorage.removeItem("user");
+        window.location.href = "/login";
         return Promise.reject(refreshError);
       }
     }
 
     return Promise.reject(error);
-  }
+  },
 );
 
 export interface Course {
@@ -71,7 +71,7 @@ export interface Course {
   occupied_slots: number;
   enrolled_count: number;
   available_slots: number;
-  status: 'open' | 'closed';
+  status: "open" | "closed";
   created_at: string;
   updated_at: string;
 }
@@ -85,14 +85,14 @@ export interface CreateCoursePayload {
   prerequisites?: number[];
   slots: number;
   occupied_slots?: number;
-  status?: 'open' | 'closed';
+  status?: "open" | "closed";
 }
 
 export const CourseAPI = {
   // Obtener todos los cursos
   async getCourses(params?: Record<string, any>) {
     try {
-      const response = await apiClient.get<Course[]>('/courses/', { params });
+      const response = await apiClient.get<Course[]>("/courses/", { params });
       return response.data;
     } catch (error: any) {
       throw error.response?.data || error;
@@ -112,12 +112,12 @@ export const CourseAPI = {
   // Crear un curso
   async createCourse(payload: CreateCoursePayload) {
     try {
-      const response = await apiClient.post<Course>('/courses/', payload);
+      const response = await apiClient.post<Course>("/courses/", payload);
       return response.data;
     } catch (error: any) {
       const errors = error.response?.data || {};
       throw {
-        message: 'Error al crear el curso',
+        message: "Error al crear el curso",
         errors,
         status: error.response?.status,
       };
@@ -127,7 +127,10 @@ export const CourseAPI = {
   // Actualizar un curso
   async updateCourse(id: number, payload: Partial<CreateCoursePayload>) {
     try {
-      const response = await apiClient.patch<Course>(`/courses/${id}/`, payload);
+      const response = await apiClient.patch<Course>(
+        `/courses/${id}/`,
+        payload,
+      );
       return response.data;
     } catch (error: any) {
       throw error.response?.data || error;
@@ -146,7 +149,7 @@ export const CourseAPI = {
   // Obtener cursos disponibles
   async getAvailableCourses() {
     try {
-      const response = await apiClient.get<Course[]>('/courses/available/');
+      const response = await apiClient.get<Course[]>("/courses/available/");
       return response.data;
     } catch (error: any) {
       throw error.response?.data || error;

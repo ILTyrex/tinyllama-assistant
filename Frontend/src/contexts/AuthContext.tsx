@@ -1,5 +1,11 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import AuthAPI from '@/api/users.api';
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
+import AuthAPI from "@/api/users.api";
 
 interface User {
   id: number;
@@ -22,7 +28,15 @@ interface AuthContextType {
   loading: boolean;
   isAuthenticated: boolean;
   login: (identification: string, password: string) => Promise<void>;
-  register: (identification: string, first_name: string, last_name: string, phone: string, email: string, password: string, password_confirm: string) => Promise<void>;
+  register: (
+    identification: string,
+    first_name: string,
+    last_name: string,
+    phone: string,
+    email: string,
+    password: string,
+    password_confirm: string,
+  ) => Promise<void>;
   logout: () => void;
   setAccessToken: (token: string) => void;
   setUser: (user: User | null) => void;
@@ -38,9 +52,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Cargar tokens desde localStorage al montar
   useEffect(() => {
-    const storedAccessToken = localStorage.getItem('accessToken');
-    const storedRefreshToken = localStorage.getItem('refreshToken');
-    const storedUser = localStorage.getItem('user');
+    const storedAccessToken = localStorage.getItem("accessToken");
+    const storedRefreshToken = localStorage.getItem("refreshToken");
+    const storedUser = localStorage.getItem("user");
 
     if (storedAccessToken && storedUser) {
       setAccessToken(storedAccessToken);
@@ -55,14 +69,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     try {
       const response = await AuthAPI.login({ identification, password });
-      
+
       setAccessToken(response.access);
       setRefreshToken(response.refresh);
       setUser(response.user);
 
-      localStorage.setItem('accessToken', response.access);
-      localStorage.setItem('refreshToken', response.refresh);
-      localStorage.setItem('user', JSON.stringify(response.user));
+      localStorage.setItem("accessToken", response.access);
+      localStorage.setItem("refreshToken", response.refresh);
+      localStorage.setItem("user", JSON.stringify(response.user));
     } catch (error) {
       throw error;
     } finally {
@@ -77,7 +91,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     phone: string,
     email: string,
     password: string,
-    password_confirm: string
+    password_confirm: string,
   ) => {
     setLoading(true);
     try {
@@ -95,9 +109,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setRefreshToken(response.refresh);
       setUser(response.user);
 
-      localStorage.setItem('accessToken', response.access);
-      localStorage.setItem('refreshToken', response.refresh);
-      localStorage.setItem('user', JSON.stringify(response.user));
+      localStorage.setItem("accessToken", response.access);
+      localStorage.setItem("refreshToken", response.refresh);
+      localStorage.setItem("user", JSON.stringify(response.user));
     } catch (error) {
       throw error;
     } finally {
@@ -109,23 +123,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(null);
     setAccessToken(null);
     setRefreshToken(null);
-    
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
-    localStorage.removeItem('user');
+
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+    localStorage.removeItem("user");
   };
 
   const handleSetAccessToken = (token: string) => {
     setAccessToken(token);
-    localStorage.setItem('accessToken', token);
+    localStorage.setItem("accessToken", token);
   };
 
   const handleSetUser = (newUser: User | null) => {
     setUser(newUser);
     if (newUser) {
-      localStorage.setItem('user', JSON.stringify(newUser));
+      localStorage.setItem("user", JSON.stringify(newUser));
     } else {
-      localStorage.removeItem('user');
+      localStorage.removeItem("user");
     }
   };
 
@@ -152,7 +166,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth debe usarse dentro de AuthProvider');
+    throw new Error("useAuth debe usarse dentro de AuthProvider");
   }
   return context;
 };

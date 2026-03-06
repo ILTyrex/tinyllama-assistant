@@ -1,13 +1,16 @@
-import { Navigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import { Spinner } from '@/components/ui/spinner';
+import { Navigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { Spinner } from "@/components/ui/spinner";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
   requiredRoles?: string[];
 }
 
-export default function ProtectedRoute({ children, requiredRoles }: ProtectedRouteProps) {
+export default function ProtectedRoute({
+  children,
+  requiredRoles,
+}: ProtectedRouteProps) {
   const { isAuthenticated, loading, user } = useAuth();
 
   if (loading) {

@@ -25,8 +25,12 @@ export function ChatMessages({ messages, isTyping }: ChatMessagesProps) {
             <Bot className="w-8 h-8 text-primary" />
           </div>
           <div>
-            <h2 className="text-xl font-display font-semibold text-foreground">¿En qué puedo ayudarte?</h2>
-            <p className="text-muted-foreground mt-1 text-sm">Escribe un mensaje para comenzar la conversación</p>
+            <h2 className="text-xl font-display font-semibold text-foreground">
+              ¿En qué puedo ayudarte?
+            </h2>
+            <p className="text-muted-foreground mt-1 text-sm">
+              Escribe un mensaje para comenzar la conversación
+            </p>
           </div>
         </div>
       </div>
@@ -41,7 +45,10 @@ export function ChatMessages({ messages, isTyping }: ChatMessagesProps) {
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: i * 0.05, duration: 0.3 }}
-          className={cn("flex gap-3", msg.role === "user" ? "justify-end" : "justify-start")}
+          className={cn(
+            "flex gap-3",
+            msg.role === "user" ? "justify-end" : "justify-start",
+          )}
         >
           {msg.role === "assistant" && (
             <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center mt-1">
@@ -53,12 +60,15 @@ export function ChatMessages({ messages, isTyping }: ChatMessagesProps) {
               "max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed",
               msg.role === "user"
                 ? "bg-user-bubble text-foreground rounded-br-md"
-                : "bg-assistant-bubble text-foreground rounded-bl-md"
+                : "bg-assistant-bubble text-foreground rounded-bl-md",
             )}
           >
             <div className="whitespace-pre-wrap">{msg.content}</div>
             <p className="text-[10px] text-muted-foreground mt-2">
-              {msg.timestamp.toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" })}
+              {msg.timestamp.toLocaleTimeString("es", {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
             </p>
           </div>
           {msg.role === "user" && (

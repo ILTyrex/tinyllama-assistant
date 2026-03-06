@@ -1,19 +1,19 @@
-import axios, { AxiosInstance } from 'axios';
+import axios, { AxiosInstance } from "axios";
 
-const API_BASE_URL = 'http://localhost:8000/api';
+const API_BASE_URL = "http://localhost:8000/api";
 
 // Crear instancia de axios
 const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
 // Interceptor para agregar el token a cada request
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('accessToken');
+    const token = localStorage.getItem("accessToken");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -21,7 +21,7 @@ apiClient.interceptors.request.use(
   },
   (error) => {
     return Promise.reject(error);
-  }
+  },
 );
 
 // Interceptor para manejar respuestas y refrescar token si es necesario
@@ -35,14 +35,14 @@ apiClient.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        const refreshToken = localStorage.getItem('refreshToken');
+        const refreshToken = localStorage.getItem("refreshToken");
         if (refreshToken) {
           const response = await axios.post(`${API_BASE_URL}/auth/refresh/`, {
             refresh: refreshToken,
           });
 
           const newAccessToken = response.data.access;
-          localStorage.setItem('accessToken', newAccessToken);
+          localStorage.setItem("accessToken", newAccessToken);
 
           // Reintentar la request original con el nuevo token
           originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
@@ -50,16 +50,16 @@ apiClient.interceptors.response.use(
         }
       } catch (refreshError) {
         // Si falla el refresh, limpiar tokens y redirigir a login
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        localStorage.removeItem('user');
-        window.location.href = '/login';
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
+        localStorage.removeItem("user");
+        window.location.href = "/login";
         return Promise.reject(refreshError);
       }
     }
 
     return Promise.reject(error);
-  }
+  },
 );
 
 interface LoginPayload {
@@ -129,65 +129,75 @@ interface ChangePasswordPayload {
 class AuthAPI {
   async login(payload: LoginPayload): Promise<AuthResponse> {
     try {
-      const response = await apiClient.post('/auth/login/', payload);
+      const response = await apiClient.post("/auth/login/", payload);
       return response.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.error || 'Error en login');
+      throw new Error(error.response?.data?.error || "Error en login");
     }
   }
 
   async register(payload: RegisterPayload): Promise<AuthResponse> {
     try {
-      const response = await apiClient.post('/auth/register/', payload);
+      const response = await apiClient.post("/auth/register/", payload);
       return response.data;
     } catch (error: any) {
-      const errorMsg = error.response?.data?.identification?.[0] || 
-                       error.response?.data?.password?.[0] || 
-                       'Error en registro';
+      const errorMsg =
+        error.response?.data?.identification?.[0] ||
+        error.response?.data?.password?.[0] ||
+        "Error en registro";
       throw new Error(errorMsg);
     }
   }
 
   async refreshToken(refreshToken: string): Promise<{ access: string }> {
     try {
-      const response = await apiClient.post('/auth/refresh/', {
+      const response = await apiClient.post("/auth/refresh/", {
         refresh: refreshToken,
       });
       return response.data;
     } catch (error: any) {
-      throw new Error('Error refrescando token');
+      throw new Error("Error refrescando token");
     }
   }
 
   async getProfile(): Promise<UserProfile> {
     try {
-      const response = await apiClient.get('/auth/me/');
+      const response = await apiClient.get("/auth/me/");
       return response.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.error || 'Error obteniendo perfil');
+      throw new Error(error.response?.data?.error || "Error obteniendo perfil");
     }
   }
 
-  async updateProfile(payload: UpdateProfilePayload): Promise<UpdateProfileResponse> {
+  async updateProfile(
+    payload: UpdateProfilePayload,
+  ): Promise<UpdateProfileResponse> {
     try {
-      const response = await apiClient.put('/auth/me/update/', payload);
+      const response = await apiClient.put("/auth/me/update/", payload);
       return response.data;
     } catch (error: any) {
-      const errorMsg = error.response?.data?.email?.[0] || 
-                       error.response?.data?.error || 
-                       'Error actualizando perfil';
+      const errorMsg =
+        error.response?.data?.email?.[0] ||
+        error.response?.data?.error ||
+        "Error actualizando perfil";
       throw new Error(errorMsg);
     }
   }
 
-  async changePassword(payload: ChangePasswordPayload): Promise<{ message: string }> {
+  async changePassword(
+    payload: ChangePasswordPayload,
+  ): Promise<{ message: string }> {
     try {
-      const response = await apiClient.post('/auth/me/change-password/', payload);
+      const response = await apiClient.post(
+        "/auth/me/change-password/",
+        payload,
+      );
       return response.data;
     } catch (error: any) {
-      const errorMsg = error.response?.data?.error || 
-                       error.response?.data?.new_password || 
-                       'Error cambiando contraseña';
+      const errorMsg =
+        error.response?.data?.error ||
+        error.response?.data?.new_password ||
+        "Error cambiando contraseña";
       throw new Error(Array.isArray(errorMsg) ? errorMsg[0] : errorMsg);
     }
   }
