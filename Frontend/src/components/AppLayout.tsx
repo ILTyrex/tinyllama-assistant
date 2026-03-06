@@ -30,12 +30,6 @@ const navItems = [
     path: "/courses",
     roles: ["student", "admin"],
   },
-  {
-    label: "Chat IA",
-    icon: MessageSquare,
-    path: "/chat",
-    roles: ["student", "admin"],
-  },
   { label: "Reportes", icon: FileBarChart, path: "/reports", roles: ["admin"] },
   {
     label: "Perfil",
@@ -144,6 +138,17 @@ export function AppLayout({ children }: AppLayoutProps) {
       <main className="flex-1 overflow-hidden flex flex-col min-w-0">
         {children}
       </main>
+
+      {/* Floating Chat Button */}
+      {location.pathname !== "/chat" && (
+        <button
+          onClick={() => navigate("/chat")}
+          className="fixed bottom-4 right-4 w-12 h-12 bg-primary text-primary-foreground rounded-full flex items-center justify-center shadow-lg hover:bg-primary/90 transition-colors"
+          title="Chat IA"
+        >
+          <MessageSquare className="w-6 h-6" />
+        </button>
+      )}
     </div>
   );
 }
