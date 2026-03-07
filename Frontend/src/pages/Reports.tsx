@@ -20,9 +20,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { AppLayout } from "@/components/AppLayout";
-import { mockEnrollments } from "@/lib/mock-courses";
 import CourseAPI, { Course } from "@/api/courses.api";
+import { ReportsAPI, EnrollmentReport } from "@/api/reports.api";
 import { useToast } from "@/hooks/use-toast";
+import Papa from "papaparse";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 export default function Reports() {
   const { toast } = useToast();
@@ -30,10 +33,13 @@ export default function Reports() {
   const [courseFilter, setCourseFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [courses, setCourses] = useState<Course[]>([]);
+  const [enrollments, setEnrollments] = useState<EnrollmentReport[]>([]);
   const [loadingCourses, setLoadingCourses] = useState(false);
+  const [loadingEnrollments, setLoadingEnrollments] = useState(false);
 
   useEffect(() => {
     loadCourses();
+    loadEnrollments();
   }, []);
 
   const loadCourses = async () => {
@@ -48,22 +54,126 @@ export default function Reports() {
     }
   };
 
+  const loadEnrollments = async () => {
+    try {
+      setLoadingEnrollments(true);
+      const data = await ReportsAPI.getEnrollments();
+      // Map backend status to frontend
+      const mappedData = data.map(enr => ({
+        ...enr,
+        status: mapStatus(enr.status)
+      }));
+      setEnrollments(mappedData);
+    } catch (error) {
+      console.error("Error loading enrollments", error);
+      toast({
+        title: "Error",
+        description: "No se pudieron cargar los reportes",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingEnrollments(false);
+    }
+  };
+
+  const mapStatus = (backendStatus: string): string => {
+    switch (backendStatus) {
+      case "inscrito": return "active";
+      case "aprobado": return "completed";
+      case "reprobado": return "cancelled";
+      case "cancelado": return "cancelled";
+      default: return "active";
+    }
+  };
+
   const filtered = useMemo(() => {
-    return mockEnrollments.filter((e) => {
+    return enrollments.filter((e) => {
       const matchSearch =
         e.studentName.toLowerCase().includes(search.toLowerCase()) ||
         e.courseCode.toLowerCase().includes(search.toLowerCase());
-      const matchCourse = courseFilter === "all" || e.courseId === courseFilter;
+      const matchCourse = courseFilter === "all" || e.courseCode === courseFilter;
       const matchStatus = statusFilter === "all" || e.status === statusFilter;
       return matchSearch && matchCourse && matchStatus;
     });
-  }, [search, courseFilter, statusFilter]);
+  }, [search, courseFilter, statusFilter, enrollments]);
 
   const handleExport = (format: string) => {
+    if (filtered.length === 0) {
+      toast({
+        title: "No hay datos",
+        description: "No hay registros para exportar",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (format === "csv") {
+      exportToCSV();
+    } else if (format === "pdf") {
+      exportToPDF();
+    }
+
     toast({
       title: `Exportando en ${format.toUpperCase()}`,
-      description: `${filtered.length} registros seleccionados`,
+      description: `${filtered.length} registros exportados`,
     });
+  };
+
+  const exportToCSV = () => {
+    const data = filtered.map(enr => ({
+      "Estudiante": enr.studentName,
+      "Email": enr.studentEmail,
+      "Curso": enr.courseName,
+      "Código": enr.courseCode,
+      "Fecha de Inscripción": new Date(enr.enrolledAt).toLocaleDateString("es"),
+      "Estado": statusLabels[enr.status],
+    }));
+
+    const csv = Papa.unparse(data);
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `reportes_inscripciones_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const exportToPDF = () => {
+    const doc = new jsPDF();
+
+    // Title
+    doc.setFontSize(18);
+    doc.text("Reportes de Inscripciones", 14, 22);
+
+    // Summary
+    doc.setFontSize(12);
+    doc.text(`Total de registros: ${filtered.length}`, 14, 35);
+    doc.text(`Activas: ${filtered.filter(e => e.status === "active").length}`, 14, 45);
+    doc.text(`Completadas: ${filtered.filter(e => e.status === "completed").length}`, 14, 55);
+    doc.text(`Canceladas: ${filtered.filter(e => e.status === "cancelled").length}`, 14, 65);
+
+    // Table
+    const tableData = filtered.map(enr => [
+      enr.studentName,
+      enr.studentEmail,
+      enr.courseName,
+      enr.courseCode,
+      new Date(enr.enrolledAt).toLocaleDateString("es"),
+      statusLabels[enr.status],
+    ]);
+
+    autoTable(doc, {
+      head: [["Estudiante", "Email", "Curso", "Código", "Fecha", "Estado"]],
+      body: tableData,
+      startY: 75,
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [41, 128, 185] },
+    });
+
+    doc.save(`reportes_inscripciones_${new Date().toISOString().split('T')[0]}.pdf`);
   };
 
   const statusColors: Record<string, string> = {
@@ -130,7 +240,7 @@ export default function Reports() {
               <SelectContent>
                 <SelectItem value="all">Todos los cursos</SelectItem>
                 {courses.map((c) => (
-                  <SelectItem key={c.id} value={c.id.toString()}>
+                  <SelectItem key={c.id} value={c.code}>
                     {c.code} — {c.name}
                   </SelectItem>
                 ))}
@@ -204,43 +314,57 @@ export default function Reports() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.map((enr) => (
-                  <TableRow
-                    key={enr.id}
-                    className="border-border hover:bg-secondary/30"
-                  >
-                    <TableCell className="text-foreground text-sm">
-                      {enr.studentName}
-                    </TableCell>
-                    <TableCell className="text-foreground text-sm">
-                      {enr.courseName}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground text-sm font-mono">
-                      {enr.courseCode}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground text-sm">
-                      {enr.enrolledAt.toLocaleDateString("es")}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant="secondary"
-                        className={`text-[10px] ${statusColors[enr.status]}`}
-                      >
-                        {statusLabels[enr.status]}
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {filtered.length === 0 && (
+                {loadingEnrollments ? (
                   <TableRow>
                     <TableCell
                       colSpan={5}
                       className="text-center text-muted-foreground py-8"
                     >
-                      <Filter className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                      No se encontraron registros
+                      <Loader2 className="w-8 h-8 mx-auto mb-2 opacity-50 animate-spin" />
+                      Cargando reportes...
                     </TableCell>
                   </TableRow>
+                ) : (
+                  <>
+                    {filtered.map((enr) => (
+                      <TableRow
+                        key={enr.id}
+                        className="border-border hover:bg-secondary/30"
+                      >
+                        <TableCell className="text-foreground text-sm">
+                          {enr.studentName}
+                        </TableCell>
+                        <TableCell className="text-foreground text-sm">
+                          {enr.courseName}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground text-sm font-mono">
+                          {enr.courseCode}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground text-sm">
+                          {new Date(enr.enrolledAt).toLocaleDateString("es")}
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant="secondary"
+                            className={`text-[10px] ${statusColors[enr.status]}`}
+                          >
+                            {statusLabels[enr.status]}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {filtered.length === 0 && !loadingEnrollments && (
+                      <TableRow>
+                        <TableCell
+                          colSpan={5}
+                          className="text-center text-muted-foreground py-8"
+                        >
+                          <Filter className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                          No se encontraron registros
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </>
                 )}
               </TableBody>
             </Table>
