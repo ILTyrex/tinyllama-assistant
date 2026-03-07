@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "users",
     "courses",
+    "enrollments",
 ]
 
 MIDDLEWARE = [
@@ -132,14 +133,18 @@ AUTH_USER_MODEL = "users.User"
 
 # CORS Configuration
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
     "http://localhost:8080",
+    "http://127.0.0.1:8080",
 ]
+
+# Permitir enviar cookies desde el frontend (credenciales) para que el navegador
+# pueda enviar el token en una cookie a las rutas protegidas.
+CORS_ALLOW_CREDENTIALS = True
 
 # REST Framework Configuration
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
+        "core.authentication.CookieJWTAuthentication",
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [

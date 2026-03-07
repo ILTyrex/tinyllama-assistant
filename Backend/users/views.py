@@ -74,7 +74,7 @@ def login(request):
             # Generar tokens JWT
             refresh = RefreshToken.for_user(user)
 
-            return Response(
+            response = Response(
                 {
                     "message": "Login exitoso",
                     "refresh": str(refresh),
@@ -84,6 +84,22 @@ def login(request):
                 status=status.HTTP_200_OK,
             )
 
+            # Set tokens in HttpOnly cookies so browser requests can be authenticated
+            # even when the client doesn't explicitly set the Authorization header.
+            response.set_cookie(
+                "accessToken",
+                str(refresh.access_token),
+                httponly=True,
+                samesite="Lax",
+            )
+            response.set_cookie(
+                "refreshToken",
+                str(refresh),
+                httponly=True,
+                samesite="Lax",
+            )
+            return response
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -91,7 +107,7 @@ def login(request):
 @permission_classes([AllowAny])
 def refresh_token(request):
     """Refrescar token de acceso"""
-    refresh_token = request.data.get("refresh")
+    refresh_token = request.data.get("refresh") or request.COOKIES.get("refreshToken")
 
     if not refresh_token:
         return Response(

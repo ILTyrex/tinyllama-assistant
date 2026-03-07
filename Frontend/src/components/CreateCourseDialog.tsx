@@ -38,6 +38,8 @@ type CourseFormState = Omit<
   slots: string;
   occupied_slots: string;
   status: "" | "open" | "closed";
+  // Store prerequisites as an array of strings (course codes or IDs)
+  prerequisites: string[];
 };
 
 const makeFormState = (course?: Course | null): CourseFormState => ({
@@ -46,7 +48,8 @@ const makeFormState = (course?: Course | null): CourseFormState => ({
   description: course?.description ?? "",
   credits: course?.credits.toString() ?? "",
   semester: course?.semester.toString() ?? "",
-  prerequisites: course?.prerequisites ?? [],
+  // Convert any existing numeric prerequisites to strings so we can render them.
+  prerequisites: course?.prerequisites?.map((p) => String(p)) ?? [],
   slots: course?.slots.toString() ?? "",
   occupied_slots: course?.occupied_slots.toString() ?? "",
   status: course?.status ?? "",
@@ -221,7 +224,7 @@ export function CreateCourseDialog({
 
           <div className="space-y-2">
             <Label className="text-foreground">
-              Prerrequisitos (IDs separados por coma)
+              Prerrequisitos (códigos separados por coma)
             </Label>
             <Input
               type="text"
@@ -232,11 +235,12 @@ export function CreateCourseDialog({
                   ...prev,
                   prerequisites: e.target.value
                     .split(",")
-                    .map((v) => Number(v.trim()))
-                    .filter((n) => !Number.isNaN(n)),
+                    .map((v) => v.trim())
+                    .filter((v) => v.length > 0),
                 }))
               }
               disabled={loading}
+              placeholder="Ej: SIS103,SIS104"
             />
           </div>
 

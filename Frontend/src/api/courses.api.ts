@@ -8,6 +8,7 @@ const apiClient: AxiosInstance = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
+  withCredentials: true,
 });
 
 // Interceptor para agregar el token
@@ -71,6 +72,7 @@ export interface Course {
   occupied_slots: number;
   enrolled_count: number;
   available_slots: number;
+  is_enrolled?: boolean;
   status: "open" | "closed";
   created_at: string;
   updated_at: string;
@@ -82,7 +84,8 @@ export interface CreateCoursePayload {
   description: string;
   credits: number;
   semester: number;
-  prerequisites?: number[];
+  // Backend now accepts either numeric IDs or course codes for prerequisites.
+  prerequisites?: Array<number | string>;
   slots: number;
   occupied_slots?: number;
   status?: "open" | "closed";
@@ -146,10 +149,30 @@ export const CourseAPI = {
     }
   },
 
+  // Inscribir en un curso
+  async enrollCourse(id: number) {
+    try {
+      const response = await apiClient.post<Course>(`/courses/${id}/enroll/`);
+      return response.data;
+    } catch (error: any) {
+      throw error.response?.data || error;
+    }
+  },
+
   // Obtener cursos disponibles
   async getAvailableCourses() {
     try {
       const response = await apiClient.get<Course[]>("/courses/available/");
+      return response.data;
+    } catch (error: any) {
+      throw error.response?.data || error;
+    }
+  },
+
+  // Obtener cursos en los que estoy inscrito
+  async getMyCourses() {
+    try {
+      const response = await apiClient.get<Course[]>("/courses/my/");
       return response.data;
     } catch (error: any) {
       throw error.response?.data || error;

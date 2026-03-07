@@ -1,0 +1,107 @@
+import axios, { AxiosInstance } from "axios";
+
+const API_BASE_URL = "http://localhost:8000/api";
+
+// Crear instancia de axios reutilizando la configuración
+const apiClient: AxiosInstance = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    "Content-Type": "application/json",
+  },
+  withCredentials: true,
+});
+
+// Interceptor para agregar el token
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("accessToken");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  },
+);
+
+// Interceptor para manejar 401
+apiClient.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      try {
+        const refreshToken = localStorage.getItem("refreshToken");
+        if (refreshToken) {
+          const response = await axios.post(`${API_BASE_URL}/auth/refresh/`, {
+            refresh: refreshToken,
+          });
+
+          const newAccessToken = response.data.access;
+          localStorage.setItem("accessToken", newAccessToken);
+
+          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+          return apiClient(originalRequest);
+        }
+      } catch (refreshError) {
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
+        localStorage.removeItem("user");
+        window.location.href = "/login";
+        return Promise.reject(refreshError);
+      }
+    }
+
+    return Promise.reject(error);
+  },
+);
+
+export interface Enrollment {
+  id: number;
+  course: {
+    id: number;
+    code: string;
+    name: string;
+    description: string;
+    credits: number;
+    semester: number;
+    status: "open" | "closed";
+    slots: number;
+    occupied_slots: number;
+    enrolled_count: number;
+    available_slots: number;
+    created_at: string;
+    updated_at: string;
+  };
+  semester_taken: number;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export const EnrollmentsAPI = {
+  // Obtener mis inscripciones
+  async getMyEnrollments() {
+    try {
+      const response = await apiClient.get<Enrollment[]>("/enrollments/");
+      return response.data;
+    } catch (error: any) {
+      throw error.response?.data || error;
+    }
+  },
+
+  // Cancelar inscripción
+  async cancelEnrollment(id: number) {
+    try {
+      await apiClient.delete(`/enrollments/${id}/`);
+    } catch (error: any) {
+      throw error.response?.data || error;
+    }
+  },
+};
+
+export default EnrollmentsAPI;

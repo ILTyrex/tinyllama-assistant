@@ -25,7 +25,7 @@ const navItems = [
     roles: ["student", "admin"],
   },
   {
-    label: "Cursos Electivos",
+    label: "Cursos",
     icon: BookOpen,
     path: "/courses",
     roles: ["student", "admin"],
