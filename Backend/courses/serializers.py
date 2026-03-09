@@ -2,32 +2,10 @@ from rest_framework import serializers
 from .models import Course
 
 
-class CourseReferenceField(serializers.PrimaryKeyRelatedField):
-    """Require either a numeric PK or a course code string.
-
-    This allows clients to provide prerequisites as either:
-      - [1, 2, 3]  (primary keys)
-      - ["MAT101", "FIS101"]  (course codes)
-
-    In bulk payloads it is common to prefer course codes for readability.
-    """
-
-    def to_internal_value(self, data):
-        if isinstance(data, str) and not data.isdigit():
-            try:
-                return Course.objects.get(code=data)
-            except Course.DoesNotExist:
-                raise serializers.ValidationError(
-                    f"No existe ningún curso con código '{data}'"
-                )
-        return super().to_internal_value(data)
-
-
 class CourseSerializer(serializers.ModelSerializer):
     enrolled_count = serializers.SerializerMethodField()
     available_slots = serializers.SerializerMethodField()
     is_enrolled = serializers.SerializerMethodField()
-    prerequisites = serializers.SerializerMethodField()
 
     class Meta:
         model = Course
@@ -38,7 +16,6 @@ class CourseSerializer(serializers.ModelSerializer):
             "description",
             "credits",
             "semester",
-            "prerequisites",
             "slots",
             "occupied_slots",
             "enrolled_count",
@@ -62,15 +39,8 @@ class CourseSerializer(serializers.ModelSerializer):
             return False
         return obj.enrollments.filter(user=request.user).exists()
 
-    def get_prerequisites(self, obj):
-        # Return course codes (e.g. "SIS103") rather than internal PKs.
-        return [c.code for c in obj.prerequisites.all()]
-
 
 class CourseCreateUpdateSerializer(serializers.ModelSerializer):
-    prerequisites = CourseReferenceField(
-        many=True, queryset=Course.objects.all(), required=False
-    )
 
     class Meta:
         model = Course
@@ -80,7 +50,6 @@ class CourseCreateUpdateSerializer(serializers.ModelSerializer):
             "description",
             "credits",
             "semester",
-            "prerequisites",
             "slots",
             "occupied_slots",
             "status",

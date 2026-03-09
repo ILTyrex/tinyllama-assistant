@@ -67,7 +67,6 @@ export interface Course {
   description: string;
   credits: number;
   semester: number;
-  prerequisites?: number[];
   slots: number;
   occupied_slots: number;
   enrolled_count: number;
@@ -84,8 +83,6 @@ export interface CreateCoursePayload {
   description: string;
   credits: number;
   semester: number;
-  // Backend now accepts either numeric IDs or course codes for prerequisites.
-  prerequisites?: Array<number | string>;
   slots: number;
   occupied_slots?: number;
   status?: "open" | "closed";

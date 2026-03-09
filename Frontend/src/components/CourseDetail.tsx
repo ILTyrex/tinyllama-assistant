@@ -93,18 +93,6 @@ export function CourseDetail({
             </p>
           </div>
 
-          {/* Requisitos previos */}
-          <div
-            className="glass-surface p-5"
-            style={{ boxShadow: "var(--shadow-card)" }}
-          >
-            <h3 className="font-display font-semibold text-foreground mb-3">
-              Requisitos previos
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              No disponibles en la versión actual
-            </p>
-          </div>
         </div>
 
         <div className="space-y-4">

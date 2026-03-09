@@ -13,7 +13,6 @@ class Course(models.Model):
     description = models.TextField()  # colocar blank=True
     credits = models.IntegerField()
     semester = models.IntegerField()
-    prerequisites = models.ManyToManyField("self", blank=True)
     slots = models.IntegerField()
     occupied_slots = models.IntegerField()  # default 0
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="open")

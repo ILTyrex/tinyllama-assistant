@@ -38,8 +38,6 @@ type CourseFormState = Omit<
   slots: string;
   occupied_slots: string;
   status: "" | "open" | "closed";
-  // Store prerequisites as an array of strings (course codes or IDs)
-  prerequisites: string[];
 };
 
 const makeFormState = (course?: Course | null): CourseFormState => ({
@@ -48,8 +46,6 @@ const makeFormState = (course?: Course | null): CourseFormState => ({
   description: course?.description ?? "",
   credits: course?.credits.toString() ?? "",
   semester: course?.semester.toString() ?? "",
-  // Convert any existing numeric prerequisites to strings so we can render them.
-  prerequisites: course?.prerequisites?.map((p) => String(p)) ?? [],
   slots: course?.slots.toString() ?? "",
   occupied_slots: course?.occupied_slots.toString() ?? "",
   status: course?.status ?? "",
@@ -64,7 +60,6 @@ export function CreateCourseDialog({
 }: CreateCourseDialogProps) {
   const { toast } = useToast();
   const [course, setCourse] = useState<CourseFormState>(makeFormState());
-  const [availableCourses, setAvailableCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(false);
 
   const isEditMode = Boolean(courseToEdit);
@@ -76,17 +71,6 @@ export function CreateCourseDialog({
     }
 
     setCourse(makeFormState(courseToEdit));
-
-    const loadCourses = async () => {
-      try {
-        const list = await CourseAPI.getCourses();
-        setAvailableCourses(list);
-      } catch {
-        // ignore, we still want to allow creating/editing without prereqs
-      }
-    };
-
-    loadCourses();
   }, [open, courseToEdit]);
 
   const handleSubmit = async () => {
@@ -221,28 +205,6 @@ export function CreateCourseDialog({
               />
             </div>
           ))}
-
-          <div className="space-y-2">
-            <Label className="text-foreground">
-              Prerrequisitos (códigos separados por coma)
-            </Label>
-            <Input
-              type="text"
-              className="bg-input border-border"
-              value={course.prerequisites?.join(",") ?? ""}
-              onChange={(e) =>
-                setCourse((prev) => ({
-                  ...prev,
-                  prerequisites: e.target.value
-                    .split(",")
-                    .map((v) => v.trim())
-                    .filter((v) => v.length > 0),
-                }))
-              }
-              disabled={loading}
-              placeholder="Ej: SIS103,SIS104"
-            />
-          </div>
 
           <div className="space-y-2">
             <Label className="text-foreground">Estado</Label>
