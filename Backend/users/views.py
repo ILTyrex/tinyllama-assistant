@@ -12,12 +12,13 @@ from .serializers import (
     UserUpdateSerializer,
     ChangePasswordSerializer,
 )
+from .permissions import IsAdminRole
 
 
 @api_view(["GET"])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated, IsAdminRole])
 def list_users(request):
-    """Lista todos los usuarios registrados"""
+    """Lista todos los usuarios registrados (solo admin)"""
     if request.method == "GET":
         users = User.objects.all()
         serializer = UserSerializer(users, many=True)
@@ -182,3 +183,71 @@ def change_password(request):
         )
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated, IsAdminRole])
+def create_user(request):
+    """Crear un nuevo usuario (solo admin)"""
+    if request.method == "POST":
+        serializer = UserRegisterSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            return Response(
+                {
+                    "message": "Usuario creado exitosamente",
+                    "user": UserSerializer(user).data,
+                },
+                status=status.HTTP_201_CREATED,
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(["PUT", "PATCH"])
+@permission_classes([IsAuthenticated, IsAdminRole])
+def update_user(request, user_id):
+    """Actualizar un usuario existente (solo admin)"""
+    try:
+        user = User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        return Response(
+            {"error": "Usuario no encontrado"}, status=status.HTTP_404_NOT_FOUND
+        )
+
+    serializer = UserUpdateSerializer(
+        user, data=request.data, partial=True, context={"request": request}
+    )
+    if serializer.is_valid():
+        serializer.save()
+        return Response(
+            {
+                "message": "Usuario actualizado exitosamente",
+                "user": UserSerializer(user).data,
+            },
+            status=status.HTTP_200_OK,
+        )
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(["DELETE"])
+@permission_classes([IsAuthenticated, IsAdminRole])
+def delete_user(request, user_id):
+    """Eliminar un usuario (solo admin)"""
+    try:
+        user = User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        return Response(
+            {"error": "Usuario no encontrado"}, status=status.HTTP_404_NOT_FOUND
+        )
+
+    # No permitir que un admin se elimine a sí mismo
+    if user.id == request.user.id:
+        return Response(
+            {"error": "No puedes eliminar tu propia cuenta"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    user.delete()
+    return Response(
+        {"message": "Usuario eliminado exitosamente"}, status=status.HTTP_200_OK
+    )

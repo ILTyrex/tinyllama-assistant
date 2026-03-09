@@ -39,6 +39,12 @@ const navItems = [
   },
   { label: "Configuración", icon: Settings, path: "/admin", roles: ["admin"] },
   {
+    label: "Usuarios",
+    icon: UserCircle,
+    path: "/users",
+    roles: ["admin"],
+  },
+  {
     label: "Ayuda",
     icon: HelpCircle,
     path: "/help",

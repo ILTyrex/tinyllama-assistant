@@ -127,6 +127,42 @@ interface ChangePasswordPayload {
   confirm_password: string;
 }
 
+interface User {
+  id: number;
+  identification: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  role: string;
+  role_display: string;
+  is_active: boolean;
+  phone?: string;
+  semester?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+interface CreateUserPayload {
+  identification: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone?: string;
+  password: string;
+  role: string;
+  semester?: number;
+}
+
+interface UpdateUserPayload {
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  phone?: string;
+  role?: string;
+  semester?: number;
+  is_active?: boolean;
+}
+
 class AuthAPI {
   async login(payload: LoginPayload): Promise<AuthResponse> {
     try {
@@ -200,6 +236,52 @@ class AuthAPI {
         error.response?.data?.new_password ||
         "Error cambiando contraseña";
       throw new Error(Array.isArray(errorMsg) ? errorMsg[0] : errorMsg);
+    }
+  }
+
+  // Gestión de usuarios (solo admin)
+  async getUsers(): Promise<User[]> {
+    try {
+      const response = await apiClient.get("/auth/");
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || "Error obteniendo usuarios");
+    }
+  }
+
+  async createUser(payload: CreateUserPayload): Promise<{ message: string; user: User }> {
+    try {
+      const response = await apiClient.post("/auth/create/", payload);
+      return response.data;
+    } catch (error: any) {
+      const errorMsg =
+        error.response?.data?.identification?.[0] ||
+        error.response?.data?.email?.[0] ||
+        error.response?.data?.error ||
+        "Error creando usuario";
+      throw new Error(Array.isArray(errorMsg) ? errorMsg[0] : errorMsg);
+    }
+  }
+
+  async updateUser(userId: number, payload: UpdateUserPayload): Promise<{ message: string; user: User }> {
+    try {
+      const response = await apiClient.put(`/auth/${userId}/update/`, payload);
+      return response.data;
+    } catch (error: any) {
+      const errorMsg =
+        error.response?.data?.email?.[0] ||
+        error.response?.data?.error ||
+        "Error actualizando usuario";
+      throw new Error(Array.isArray(errorMsg) ? errorMsg[0] : errorMsg);
+    }
+  }
+
+  async deleteUser(userId: number): Promise<{ message: string }> {
+    try {
+      const response = await apiClient.delete(`/auth/${userId}/delete/`);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || "Error eliminando usuario");
     }
   }
 }
