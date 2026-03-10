@@ -7,3 +7,5 @@ python-dotenv
 Pillow
 django-filter
 requests
+gunicorn
+dj-database-url

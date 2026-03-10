@@ -10,7 +10,10 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+import os
 from pathlib import Path
+
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,12 +23,25 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-nei+%78nn!q@c7p@jt*ez)3vp$@gq$evrx%@$!-%q%w@q0#q^e"
+SECRET_KEY = os.environ.get(
+    "SECRET_KEY",
+    "django-insecure-nei+%78nn!q@c7p@jt*ez)3vp$@gq$evrx%@$!-%q%w@q0#q^e",
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get("DEBUG", "True").strip().lower() in {"1", "true", "yes", "y"}
 
-ALLOWED_HOSTS = []
+allowed_hosts = [
+    h.strip()
+    for h in os.environ.get("ALLOWED_HOSTS", "").split(",")
+    if h.strip()
+]
+render_host = os.environ.get("RENDER_EXTERNAL_HOSTNAME")
+if render_host:
+    allowed_hosts.append(render_host)
+if DEBUG and not allowed_hosts:
+    allowed_hosts = ["localhost", "127.0.0.1"]
+ALLOWED_HOSTS = list(dict.fromkeys(allowed_hosts))
 
 
 # Application definition
@@ -83,10 +99,11 @@ WSGI_APPLICATION = "core.wsgi.application"
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
+    "default": dj_database_url.config(
+        default=f"sqlite:///{(BASE_DIR / 'db.sqlite3').as_posix()}",
+        conn_max_age=600,
+        ssl_require=not DEBUG,
+    )
 }
 
 
