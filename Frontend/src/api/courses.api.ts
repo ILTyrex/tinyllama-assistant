@@ -1,64 +1,4 @@
-import axios, { AxiosInstance } from "axios";
-
-const API_BASE_URL = "http://localhost:8000/api";
-
-// Crear instancia de axios reutilizando la configuración
-const apiClient: AxiosInstance = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    "Content-Type": "application/json",
-  },
-  withCredentials: true,
-});
-
-// Interceptor para agregar el token
-apiClient.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem("accessToken");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  },
-);
-
-// Interceptor para manejar 401
-apiClient.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
-
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-
-      try {
-        const refreshToken = localStorage.getItem("refreshToken");
-        if (refreshToken) {
-          const response = await axios.post(`${API_BASE_URL}/auth/refresh/`, {
-            refresh: refreshToken,
-          });
-
-          const newAccessToken = response.data.access;
-          localStorage.setItem("accessToken", newAccessToken);
-
-          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-          return apiClient(originalRequest);
-        }
-      } catch (refreshError) {
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
-        localStorage.removeItem("user");
-        window.location.href = "/login";
-        return Promise.reject(refreshError);
-      }
-    }
-
-    return Promise.reject(error);
-  },
-);
+﻿import api from "./config";
 
 export interface Course {
   id: number;
@@ -89,91 +29,43 @@ export interface CreateCoursePayload {
 }
 
 export const CourseAPI = {
-  // Obtener todos los cursos
   async getCourses(params?: Record<string, any>) {
-    try {
-      const response = await apiClient.get<Course[]>("/courses/", { params });
-      return response.data;
-    } catch (error: any) {
-      throw error.response?.data || error;
-    }
+    const response = await api.get<Course[]>("/courses/", { params });
+    return response.data;
   },
 
-  // Obtener un curso específico
   async getCourse(id: number) {
-    try {
-      const response = await apiClient.get<Course>(`/courses/${id}/`);
-      return response.data;
-    } catch (error: any) {
-      throw error.response?.data || error;
-    }
+    const response = await api.get<Course>(`/courses/${id}/`);
+    return response.data;
   },
 
-  // Crear un curso
   async createCourse(payload: CreateCoursePayload) {
-    try {
-      const response = await apiClient.post<Course>("/courses/", payload);
-      return response.data;
-    } catch (error: any) {
-      const errors = error.response?.data || {};
-      throw {
-        message: "Error al crear el curso",
-        errors,
-        status: error.response?.status,
-      };
-    }
+    const response = await api.post<Course>("/courses/", payload);
+    return response.data;
   },
 
-  // Actualizar un curso
   async updateCourse(id: number, payload: Partial<CreateCoursePayload>) {
-    try {
-      const response = await apiClient.patch<Course>(
-        `/courses/${id}/`,
-        payload,
-      );
-      return response.data;
-    } catch (error: any) {
-      throw error.response?.data || error;
-    }
+    const response = await api.patch<Course>(`/courses/${id}/`, payload);
+    return response.data;
   },
 
-  // Eliminar un curso
   async deleteCourse(id: number) {
-    try {
-      await apiClient.delete(`/courses/${id}/`);
-    } catch (error: any) {
-      throw error.response?.data || error;
-    }
+    await api.delete(`/courses/${id}/`);
   },
 
-  // Inscribir en un curso
   async enrollCourse(id: number) {
-    try {
-      const response = await apiClient.post<Course>(`/courses/${id}/enroll/`);
-      return response.data;
-    } catch (error: any) {
-      throw error.response?.data || error;
-    }
+    const response = await api.post<Course>(`/courses/${id}/enroll/`);
+    return response.data;
   },
 
-  // Obtener cursos disponibles
   async getAvailableCourses() {
-    try {
-      const response = await apiClient.get<Course[]>("/courses/available/");
-      return response.data;
-    } catch (error: any) {
-      throw error.response?.data || error;
-    }
+    const response = await api.get<Course[]>("/courses/available/");
+    return response.data;
   },
 
-  // Obtener cursos en los que estoy inscrito
   async getMyCourses() {
-    try {
-      const response = await apiClient.get<Course[]>("/courses/my/");
-      return response.data;
-    } catch (error: any) {
-      throw error.response?.data || error;
-    }
+    const response = await api.get<Course[]>("/courses/my/");
+    return response.data;
   },
 };
 
