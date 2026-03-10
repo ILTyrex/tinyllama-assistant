@@ -168,10 +168,12 @@ export function AppLayout({ children }: AppLayoutProps) {
         </button>
       )}
 
-      <ChatWidget
-        open={showChatWidget}
-        onClose={() => setShowChatWidget(false)}
-      />
+      {showChatWidget && (
+        <ChatWidget
+          open={showChatWidget}
+          onClose={() => setShowChatWidget(false)}
+        />
+      )}
     </div>
   );
 }

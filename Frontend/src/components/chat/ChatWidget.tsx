@@ -1,8 +1,9 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { X, Maximize2, Minimize2 } from "lucide-react";
 import { ChatMessages } from "@/components/chat/ChatMessages";
 import { ChatInput } from "@/components/chat/ChatInput";
 import { ChatSidebar } from "@/components/chat/ChatSidebar";
+import { RightPanel } from "@/components/chat/RightPanel";
 import { Conversation } from "@/lib/mock-data";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -28,6 +29,12 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
   } = useChatSession();
 
   const [expanded, setExpanded] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setExpanded(false);
+    }
+  }, [open]);
 
   const activeId = session ? String(session.id) : null;
 
@@ -162,6 +169,8 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
                 loading={isSending}
               />
             </div>
+
+            <RightPanel conversation={conversation} />
           </div>
         </div>
       </div>
