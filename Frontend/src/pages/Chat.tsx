@@ -1,44 +1,95 @@
 import { useEffect, useMemo } from "react";
+import { useLocation } from "react-router-dom";
 import { ChatSidebar } from "@/components/chat/ChatSidebar";
 import { ChatMessages } from "@/components/chat/ChatMessages";
 import { ChatInput } from "@/components/chat/ChatInput";
-import { RightPanel } from "@/components/chat/RightPanel";
 import { AppLayout } from "@/components/AppLayout";
 import { Conversation } from "@/lib/mock-data";
 import { useChatSession } from "@/hooks/useChatSession";
 
 export default function Chat() {
   const {
+    session,
+    sessions,
     messages,
     isTyping,
     isSending,
     error,
     startSession,
+    loadSession,
+    selectSession,
     sendMessage,
     resetConversation,
   } = useChatSession();
 
-  const conversation: Conversation = useMemo(
-    () => ({
-      id: "chat",
-      title: "NexusChat",
-      snippet:
-        messages[messages.length - 1]?.content ?? "Empieza a escribir...",
-      date: new Date(),
+  const location = useLocation();
+
+  useEffect(() => {
+    const sessionId = (location.state as any)?.sessionId;
+    if (!sessionId) return;
+
+    // Load a session when coming from the history list (or direct link)
+    loadSession(Number(sessionId)).catch(() => {
+      /* ignore */
+    });
+  }, [location.state, loadSession]);
+
+  const activeId = session ? String(session.id) : null;
+
+  const conversations = useMemo(() => {
+    return sessions.map((s) => {
+      const lastMessage = s.messages[s.messages.length - 1];
+      const snippet = lastMessage?.content ?? "No hay mensajes todavía";
+      const date = lastMessage
+        ? new Date(lastMessage.created_at)
+        : new Date(s.started_at);
+
+      return {
+        id: String(s.id),
+        title: `Chat #${s.id}`,
+        snippet,
+        date,
+        tags: [],
+        messageCount: s.messages.length,
+        messages: s.messages.map((m) => ({
+          id: String(m.id),
+          role: m.role,
+          content: m.content,
+          timestamp: new Date(m.created_at),
+        })),
+      };
+    });
+  }, [sessions]);
+
+  const conversation: Conversation = useMemo(() => {
+    if (!session) {
+      return {
+        id: "chat",
+        title: "NexusChat",
+        snippet: "Empieza a escribir...",
+        date: new Date(),
+        tags: [],
+        messageCount: messages.length,
+        messages,
+      };
+    }
+
+    const lastMessage = session.messages[session.messages.length - 1];
+    const snippet = lastMessage?.content ?? "Empieza a escribir...";
+    const date = lastMessage
+      ? new Date(lastMessage.created_at)
+      : new Date(session.started_at);
+
+    return {
+      id: String(session.id),
+      title: `Chat #${session.id}`,
+      snippet,
+      date,
       tags: [],
       messageCount: messages.length,
       messages,
-    }),
-    [messages],
-  );
-
-  const conversations = useMemo(() => [conversation], [conversation]);
-
-  useEffect(() => {
-    startSession().catch(() => {
-      // error handled in hook
-    });
-  }, [startSession]);
+    };
+  }, [messages, session]);
 
   const handleSend = async (text: string) => {
     try {
@@ -57,10 +108,8 @@ export default function Chat() {
       <div className="flex-1 flex h-full">
         <ChatSidebar
           conversations={conversations}
-          activeId="chat"
-          onSelect={() => {
-            /* Only one session */
-          }}
+          activeId={activeId}
+          onSelect={selectSession}
           onNew={handleReset}
         />
 
@@ -88,8 +137,6 @@ export default function Chat() {
             loading={isSending}
           />
         </div>
-
-        <RightPanel conversation={conversation} />
       </div>
     </AppLayout>
   );

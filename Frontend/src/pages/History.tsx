@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { AppLayout } from "@/components/AppLayout";
@@ -28,22 +28,55 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Label } from "@/components/ui/label";
-import { mockConversations } from "@/lib/mock-data";
+import ChatAPI, { ChatSessionDTO } from "@/api/chat.api";
+
+const SESSION_STORAGE_KEY = "chatSessionId";
+
+interface Conversation {
+  id: number;
+  title: string;
+  snippet: string;
+  date: Date;
+  tags: string[];
+  messageCount: number;
+}
 
 export default function History() {
   const navigate = useNavigate();
+  const [sessions, setSessions] = useState<ChatSessionDTO[]>([]);
   const [search, setSearch] = useState("");
   const [tagFilter, setTagFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("date");
   const [minMessages, setMinMessages] = useState<number>(0);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const toConversation = (session: ChatSessionDTO): Conversation => {
+    const lastMessage = session.messages[session.messages.length - 1];
+    const snippet = lastMessage?.content ?? "No hay mensajes todavía";
+    const date = lastMessage
+      ? new Date(lastMessage.created_at)
+      : new Date(session.started_at);
+
+    return {
+      id: session.id,
+      title: `Chat #${session.id}`,
+      snippet,
+      date,
+      tags: [],
+      messageCount: session.messages.length,
+    };
+  };
 
   const allTags = useMemo(
-    () => Array.from(new Set(mockConversations.flatMap((c) => c.tags))),
-    [],
+    () => Array.from(new Set(sessions.flatMap((s) => toConversation(s).tags))),
+    [sessions],
   );
 
   const filtered = useMemo(() => {
-    let result = mockConversations.filter((c) => {
+    const conversations = sessions.map(toConversation);
+
+    let result = conversations.filter((c) => {
       const matchSearch =
         c.title.toLowerCase().includes(search.toLowerCase()) ||
         c.snippet.toLowerCase().includes(search.toLowerCase());
@@ -60,7 +93,18 @@ export default function History() {
       result.sort((a, b) => a.title.localeCompare(b.title));
 
     return result;
-  }, [search, tagFilter, sortBy, minMessages]);
+  }, [sessions, search, tagFilter, sortBy, minMessages]);
+
+  useEffect(() => {
+    setLoading(true);
+    setError(null);
+    ChatAPI.listSessions()
+      .then((data) => setSessions(data))
+      .catch((err) =>
+        setError(err?.message || "No se pudieron cargar sesiones"),
+      )
+      .finally(() => setLoading(false));
+  }, []);
 
   return (
     <AppLayout>
@@ -159,7 +203,10 @@ export default function History() {
                 transition={{ delay: i * 0.05 }}
               >
                 <button
-                  onClick={() => navigate("/chat")}
+                  onClick={() => {
+                    localStorage.setItem(SESSION_STORAGE_KEY, String(conv.id));
+                    navigate("/chat", { state: { sessionId: conv.id } });
+                  }}
                   className="w-full text-left glass-surface p-5 hover:border-primary/30 transition-all group"
                   style={{ boxShadow: "var(--shadow-card)" }}
                 >
@@ -197,14 +244,24 @@ export default function History() {
             ))}
           </div>
 
-          {filtered.length === 0 && (
+          {loading ? (
+            <div className="text-center py-16">
+              <p className="text-muted-foreground">
+                Cargando conversaciones...
+              </p>
+            </div>
+          ) : error ? (
+            <div className="text-center py-16">
+              <p className="text-red-500">{error}</p>
+            </div>
+          ) : filtered.length === 0 ? (
             <div className="text-center py-16">
               <Filter className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
               <p className="text-muted-foreground">
                 No se encontraron conversaciones con estos filtros
               </p>
             </div>
-          )}
+          ) : null}
         </div>
       </div>
     </AppLayout>

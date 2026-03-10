@@ -1,9 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { X, Maximize2, Minimize2 } from "lucide-react";
 import { ChatMessages } from "@/components/chat/ChatMessages";
 import { ChatInput } from "@/components/chat/ChatInput";
 import { ChatSidebar } from "@/components/chat/ChatSidebar";
-import { RightPanel } from "@/components/chat/RightPanel";
 import { Conversation } from "@/lib/mock-data";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -16,39 +15,76 @@ interface ChatWidgetProps {
 
 export function ChatWidget({ open, onClose }: ChatWidgetProps) {
   const {
+    session,
+    sessions,
     messages,
     isTyping,
     isSending,
     error,
     startSession,
+    selectSession,
     sendMessage,
     resetConversation,
   } = useChatSession();
 
   const [expanded, setExpanded] = useState(false);
 
-  const conversation: Conversation = useMemo(
-    () => ({
-      id: "chat",
-      title: "NexusChat",
-      snippet:
-        messages[messages.length - 1]?.content ?? "Empieza a escribir...",
-      date: new Date(),
+  const activeId = session ? String(session.id) : null;
+
+  const conversations = useMemo(() => {
+    return sessions.map((s) => {
+      const lastMessage = s.messages[s.messages.length - 1];
+      const snippet = lastMessage?.content ?? "No hay mensajes todavía";
+      const date = lastMessage
+        ? new Date(lastMessage.created_at)
+        : new Date(s.started_at);
+
+      return {
+        id: String(s.id),
+        title: `Chat #${s.id}`,
+        snippet,
+        date,
+        tags: [],
+        messageCount: s.messages.length,
+        messages: s.messages.map((m) => ({
+          id: String(m.id),
+          role: m.role,
+          content: m.content,
+          timestamp: new Date(m.created_at),
+        })),
+      };
+    });
+  }, [sessions]);
+
+  const conversation = useMemo(() => {
+    if (!session) {
+      return {
+        id: "chat",
+        title: "NexusChat",
+        snippet: "Empieza a escribir...",
+        date: new Date(),
+        tags: [],
+        messageCount: messages.length,
+        messages,
+      } as Conversation;
+    }
+
+    const lastMessage = session.messages[session.messages.length - 1];
+    const snippet = lastMessage?.content ?? "Empieza a escribir...";
+    const date = lastMessage
+      ? new Date(lastMessage.created_at)
+      : new Date(session.started_at);
+
+    return {
+      id: String(session.id),
+      title: `Chat #${session.id}`,
+      snippet,
+      date,
       tags: [],
       messageCount: messages.length,
       messages,
-    }),
-    [messages],
-  );
-
-  const conversations = useMemo(() => [conversation], [conversation]);
-
-  useEffect(() => {
-    if (!open) return;
-    startSession().catch(() => {
-      // error already handled by hook
-    });
-  }, [open, startSession]);
+    };
+  }, [messages, session]);
 
   const handleSend = async (text: string) => {
     try {
@@ -100,10 +136,8 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
           <div className="flex h-full w-full">
             <ChatSidebar
               conversations={conversations}
-              activeId="chat"
-              onSelect={() => {
-                /* only one session for now */
-              }}
+              activeId={activeId}
+              onSelect={selectSession}
               onNew={handleNewConversation}
             />
 
@@ -128,8 +162,6 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
                 loading={isSending}
               />
             </div>
-
-            <RightPanel conversation={conversation} />
           </div>
         </div>
       </div>
@@ -187,13 +219,11 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
                 key={conv.id}
                 className={cn(
                   "w-full px-3 py-2 text-left text-xs font-medium transition-colors",
-                  conv.id === "chat"
+                  conv.id === activeId
                     ? "bg-primary/10 text-primary"
                     : "text-muted-foreground hover:bg-secondary/30",
                 )}
-                onClick={() => {
-                  /* only one session for now */
-                }}
+                onClick={() => selectSession(conv.id)}
                 title={conv.title}
               >
                 {conv.title}

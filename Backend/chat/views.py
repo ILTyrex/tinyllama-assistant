@@ -1,3 +1,4 @@
+# views.py
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -185,3 +186,16 @@ class SessionHistoryView(APIView):
             return Response(
                 {"error": "Sesión no encontrada"}, status=status.HTTP_404_NOT_FOUND
             )
+
+
+class ListSessionsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        sessions = (
+            ChatSession.objects.filter(user=request.user)
+            .order_by("-started_at")
+            .prefetch_related("messages")
+        )
+        serializer = ChatSessionSerializer(sessions, many=True)
+        return Response(serializer.data)

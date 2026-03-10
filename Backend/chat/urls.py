@@ -4,8 +4,9 @@ from . import views
 urlpatterns = [
     # Proxy que replica el comportamiento del Colab (misma ruta /api/chat/)
     path("", views.ChatProxyView.as_view(), name="chat-proxy"),
-    # Endpoints con sesión guardada en la DB (opcional)
+    # Endpoints con sesión guardada en la DB
     path("session/start/", views.StartSessionView.as_view(), name="chat-start"),
+    path("session/sessions/", views.ListSessionsView.as_view(), name="chat-sessions"),
     path(
         "session/<int:session_id>/end/", views.EndSessionView.as_view(), name="chat-end"
     ),

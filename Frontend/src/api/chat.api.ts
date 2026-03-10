@@ -61,6 +61,11 @@ export const ChatAPI = {
     );
     return response.data;
   },
+
+  async listSessions(): Promise<ChatSessionDTO[]> {
+    const response = await api.get<ChatSessionDTO[]>("/chat/session/sessions/");
+    return response.data;
+  },
 };
 
 export default ChatAPI;
