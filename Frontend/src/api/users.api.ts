@@ -1,67 +1,4 @@
-import axios, { AxiosInstance } from "axios";
-
-const API_BASE_URL = "http://localhost:8000/api";
-
-// Crear instancia de axios
-const apiClient: AxiosInstance = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    "Content-Type": "application/json",
-  },
-  withCredentials: true,
-});
-
-// Interceptor para agregar el token a cada request
-apiClient.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem("accessToken");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  },
-);
-
-// Interceptor para manejar respuestas y refrescar token si es necesario
-apiClient.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
-
-    // Si el error es 401 y no es un reintentu
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-
-      try {
-        const refreshToken = localStorage.getItem("refreshToken");
-        if (refreshToken) {
-          const response = await axios.post(`${API_BASE_URL}/auth/refresh/`, {
-            refresh: refreshToken,
-          });
-
-          const newAccessToken = response.data.access;
-          localStorage.setItem("accessToken", newAccessToken);
-
-          // Reintentar la request original con el nuevo token
-          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-          return apiClient(originalRequest);
-        }
-      } catch (refreshError) {
-        // Si falla el refresh, limpiar tokens y redirigir a login
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
-        localStorage.removeItem("user");
-        window.location.href = "/login";
-        return Promise.reject(refreshError);
-      }
-    }
-
-    return Promise.reject(error);
-  },
-);
+import api from "./config";
 
 interface LoginPayload {
   identification: string;
@@ -166,7 +103,7 @@ interface UpdateUserPayload {
 class AuthAPI {
   async login(payload: LoginPayload): Promise<AuthResponse> {
     try {
-      const response = await apiClient.post("/auth/login/", payload);
+      const response = await api.post("/auth/login/", payload);
       return response.data;
     } catch (error: any) {
       throw new Error(error.response?.data?.error || "Error en login");
@@ -175,7 +112,7 @@ class AuthAPI {
 
   async register(payload: RegisterPayload): Promise<AuthResponse> {
     try {
-      const response = await apiClient.post("/auth/register/", payload);
+      const response = await api.post("/auth/register/", payload);
       return response.data;
     } catch (error: any) {
       const errorMsg =
@@ -188,7 +125,7 @@ class AuthAPI {
 
   async refreshToken(refreshToken: string): Promise<{ access: string }> {
     try {
-      const response = await apiClient.post("/auth/refresh/", {
+      const response = await api.post("/auth/refresh/", {
         refresh: refreshToken,
       });
       return response.data;
@@ -199,7 +136,7 @@ class AuthAPI {
 
   async getProfile(): Promise<UserProfile> {
     try {
-      const response = await apiClient.get("/auth/me/");
+      const response = await api.get("/auth/me/");
       return response.data;
     } catch (error: any) {
       throw new Error(error.response?.data?.error || "Error obteniendo perfil");
@@ -210,7 +147,7 @@ class AuthAPI {
     payload: UpdateProfilePayload,
   ): Promise<UpdateProfileResponse> {
     try {
-      const response = await apiClient.put("/auth/me/update/", payload);
+      const response = await api.put("/auth/me/update/", payload);
       return response.data;
     } catch (error: any) {
       const errorMsg =
@@ -225,10 +162,7 @@ class AuthAPI {
     payload: ChangePasswordPayload,
   ): Promise<{ message: string }> {
     try {
-      const response = await apiClient.post(
-        "/auth/me/change-password/",
-        payload,
-      );
+      const response = await api.post("/auth/me/change-password/", payload);
       return response.data;
     } catch (error: any) {
       const errorMsg =
@@ -242,7 +176,7 @@ class AuthAPI {
   // Gestión de usuarios (solo admin)
   async getUsers(): Promise<User[]> {
     try {
-      const response = await apiClient.get("/auth/");
+      const response = await api.get("/auth/");
       return response.data;
     } catch (error: any) {
       throw new Error(error.response?.data?.error || "Error obteniendo usuarios");
@@ -251,7 +185,7 @@ class AuthAPI {
 
   async createUser(payload: CreateUserPayload): Promise<{ message: string; user: User }> {
     try {
-      const response = await apiClient.post("/auth/create/", payload);
+      const response = await api.post("/auth/create/", payload);
       return response.data;
     } catch (error: any) {
       const errorMsg =
@@ -265,7 +199,7 @@ class AuthAPI {
 
   async updateUser(userId: number, payload: UpdateUserPayload): Promise<{ message: string; user: User }> {
     try {
-      const response = await apiClient.put(`/auth/${userId}/update/`, payload);
+      const response = await api.put(`/auth/${userId}/update/`, payload);
       return response.data;
     } catch (error: any) {
       const errorMsg =
@@ -278,7 +212,7 @@ class AuthAPI {
 
   async deleteUser(userId: number): Promise<{ message: string }> {
     try {
-      const response = await apiClient.delete(`/auth/${userId}/delete/`);
+      const response = await api.delete(`/auth/${userId}/delete/`);
       return response.data;
     } catch (error: any) {
       throw new Error(error.response?.data?.error || "Error eliminando usuario");
@@ -287,4 +221,3 @@ class AuthAPI {
 }
 
 export default new AuthAPI();
-export { apiClient };

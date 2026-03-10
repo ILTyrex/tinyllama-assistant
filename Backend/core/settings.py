@@ -152,10 +152,15 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 AUTH_USER_MODEL = "users.User"
 
 # CORS Configuration
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:8080",
-    "http://127.0.0.1:8080",
-]
+# Render env example: CORS_ORIGINS="http://localhost:8080,https://your-frontend.onrender.com"
+cors_origins_env = os.environ.get("CORS_ORIGINS", "").strip()
+if cors_origins_env:
+    CORS_ALLOWED_ORIGINS = [o.strip() for o in cors_origins_env.split(",") if o.strip()]
+else:
+    CORS_ALLOWED_ORIGINS = [
+        "http://localhost:8080",
+        "http://127.0.0.1:8080",
+    ]
 
 # Permitir enviar cookies desde el frontend (credenciales) para que el navegador
 # pueda enviar el token en una cookie a las rutas protegidas.
