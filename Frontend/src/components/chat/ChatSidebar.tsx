@@ -11,6 +11,7 @@ interface ChatSidebarProps {
   activeId: string | null;
   onSelect: (id: string) => void;
   onNew: () => void;
+  onDelete?: (id: string) => void;
 }
 
 export function ChatSidebar({
@@ -18,6 +19,7 @@ export function ChatSidebar({
   activeId,
   onSelect,
   onNew,
+  onDelete,
 }: ChatSidebarProps) {
   const [search, setSearch] = useState("");
   const navigate = useNavigate();
@@ -61,21 +63,31 @@ export function ChatSidebar({
       {/* Conversation list */}
       <div className="flex-1 overflow-y-auto scrollbar-thin px-2 space-y-0.5">
         {filtered.map((conv) => (
-          <button
-            key={conv.id}
-            onClick={() => onSelect(conv.id)}
-            className={cn(
-              "w-full text-left px-3 py-2.5 rounded-lg transition-colors group",
-              activeId === conv.id
-                ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                : "text-sidebar-foreground hover:bg-sidebar-accent/50",
+          <div key={conv.id} className="flex items-center group">
+            <button
+              onClick={() => onSelect(conv.id)}
+              className={cn(
+                "flex-1 text-left px-3 py-2.5 rounded-lg transition-colors group",
+                activeId === conv.id
+                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                  : "text-sidebar-foreground hover:bg-sidebar-accent/50",
+              )}
+            >
+              <p className="text-sm font-medium truncate">{conv.title}</p>
+              <p className="text-xs text-muted-foreground truncate mt-0.5">
+                {conv.snippet}
+              </p>
+            </button>
+            {onDelete && (
+              <button
+                className="ml-1 p-1 text-xs text-red-500 hover:text-red-700 opacity-0 group-hover:opacity-100"
+                title="Eliminar chat"
+                onClick={() => onDelete(conv.id)}
+              >
+                🗑️
+              </button>
             )}
-          >
-            <p className="text-sm font-medium truncate">{conv.title}</p>
-            <p className="text-xs text-muted-foreground truncate mt-0.5">
-              {conv.snippet}
-            </p>
-          </button>
+          </div>
         ))}
       </div>
 

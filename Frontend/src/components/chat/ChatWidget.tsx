@@ -8,6 +8,7 @@ import { Conversation } from "@/lib/mock-data";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useChatSession } from "@/hooks/useChatSession";
+import ChatAPI from "@/api/chat.api";
 
 interface ChatWidgetProps {
   open: boolean;
@@ -18,6 +19,7 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
   const {
     session,
     sessions,
+    deleteLocalSession,
     messages,
     isTyping,
     isSending,
@@ -28,6 +30,17 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
     resetConversation,
   } = useChatSession();
 
+  // Eliminar conversación: primero en backend, luego en estado local
+  const handleDeleteConversation = async (id: string) => {
+    try {
+      await ChatAPI.deleteSession(Number(id));
+    } catch (err) {
+      // Si falla la eliminación remota, aún intentamos mantener coherencia local
+      console.error("Error deleting session on backend:", err);
+    }
+
+    if (deleteLocalSession) deleteLocalSession(id);
+  };
   const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
@@ -146,6 +159,7 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
               activeId={activeId}
               onSelect={selectSession}
               onNew={handleNewConversation}
+              onDelete={handleDeleteConversation}
             />
 
             <div className="flex-1 flex flex-col min-w-0">
@@ -224,19 +238,27 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
           </div>
           <div className="flex-1 overflow-y-auto scrollbar-thin">
             {conversations.map((conv) => (
-              <button
-                key={conv.id}
-                className={cn(
-                  "w-full px-3 py-2 text-left text-xs font-medium transition-colors",
-                  conv.id === activeId
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:bg-secondary/30",
-                )}
-                onClick={() => selectSession(conv.id)}
-                title={conv.title}
-              >
-                {conv.title}
-              </button>
+              <div key={conv.id} className="flex items-center group">
+                <button
+                  className={cn(
+                    "flex-1 px-3 py-2 text-left text-xs font-medium transition-colors",
+                    conv.id === activeId
+                      ? "bg-primary/10 text-primary"
+                      : "text-muted-foreground hover:bg-secondary/30",
+                  )}
+                  onClick={() => selectSession(conv.id)}
+                  title={conv.title}
+                >
+                  {conv.title}
+                </button>
+                <button
+                  className="ml-1 p-1 text-xs text-red-500 hover:text-red-700 opacity-0 group-hover:opacity-100"
+                  title="Eliminar chat"
+                  onClick={() => handleDeleteConversation(conv.id)}
+                >
+                  🗑️
+                </button>
+              </div>
             ))}
           </div>
         </div>

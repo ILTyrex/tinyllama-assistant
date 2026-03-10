@@ -100,6 +100,16 @@ export function useChatSession() {
     localStorage.removeItem(SESSION_STORAGE_KEY);
   }, [session]);
 
+  const deleteLocalSession = useCallback((sessionId: string) => {
+    setSessions((prev) => prev.filter((s) => String(s.id) !== sessionId));
+
+    if (String(session?.id) === String(sessionId)) {
+      setSession(null);
+      setMessages([]);
+      localStorage.removeItem(SESSION_STORAGE_KEY);
+    }
+  }, [session]);
+
   const sendMessage = useCallback(
     async (text: string) => {
       if (!session) {
@@ -191,5 +201,6 @@ export function useChatSession() {
     sendMessage,
     endSession,
     resetConversation,
+    deleteLocalSession,
   };
 }

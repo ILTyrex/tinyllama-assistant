@@ -20,4 +20,9 @@ urlpatterns = [
         views.SessionHistoryView.as_view(),
         name="chat-history",
     ),
+    path(
+        "session/<int:session_id>/",
+        views.DeleteSessionView.as_view(),
+        name="chat-delete",
+    ),
 ]

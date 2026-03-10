@@ -66,6 +66,10 @@ export const ChatAPI = {
     const response = await api.get<ChatSessionDTO[]>("/chat/session/sessions/");
     return response.data;
   },
+
+  async deleteSession(sessionId: number): Promise<void> {
+    await api.delete(`/chat/session/${sessionId}/`);
+  },
 };
 
 export default ChatAPI;
