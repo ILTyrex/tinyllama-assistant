@@ -9,3 +9,4 @@ django-filter
 requests
 gunicorn
 dj-database-url
+reportlab

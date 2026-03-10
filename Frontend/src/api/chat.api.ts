@@ -70,6 +70,10 @@ export const ChatAPI = {
   async deleteSession(sessionId: number): Promise<void> {
     await api.delete(`/chat/session/${sessionId}/`);
   },
+
+  async reportSession(sessionId: number, email: string): Promise<void> {
+    await api.post(`/chat/session/${sessionId}/report/`, { email });
+  },
 };
 
 export default ChatAPI;

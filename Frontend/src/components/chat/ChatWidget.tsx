@@ -170,6 +170,31 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
                 <span className="ml-3 text-xs text-muted-foreground">
                   {conversation.messageCount} mensajes
                 </span>
+                <div className="ml-auto">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-muted-foreground hover:text-foreground"
+                    onClick={async () => {
+                      if (!session) {
+                        alert("Selecciona una conversación primero");
+                        return;
+                      }
+                      const email = window.prompt("Enviar reporte a (email):", "");
+                      if (!email) return;
+                      try {
+                        await ChatAPI.reportSession(Number(session.id), email);
+                        alert("Reporte enviado correctamente");
+                      } catch (err: any) {
+                        console.error(err);
+                        const detail = err?.response?.data?.detail || err?.response?.data?.error || err?.message || String(err);
+                        alert(`Error al enviar el reporte: ${detail}`);
+                      }
+                    }}
+                  >
+                    Reporte
+                  </Button>
+                </div>
               </div>
               {error ? (
                 <div className="p-6 text-sm text-red-500">{error}</div>

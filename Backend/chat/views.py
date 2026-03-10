@@ -9,6 +9,16 @@ import requests
 
 from .models import ChatSession, ChatMessage
 from .serializers import ChatSessionSerializer, ChatMessageSerializer
+from django.core.mail import EmailMessage
+from django.template.loader import render_to_string
+from django.conf import settings
+import io
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
+from reportlab.lib.units import inch
+import traceback
+import logging
 
 # URL de tu API en Google Colab (se actualiza cada sesión)
 # Puedes sobreescribirla usando la variable de entorno COLAB_API_URL.
@@ -211,3 +221,70 @@ class DeleteSessionView(APIView):
             return Response({"message": "Sesión eliminada"}, status=status.HTTP_204_NO_CONTENT)
         except ChatSession.DoesNotExist:
             return Response({"error": "Sesión no encontrada"}, status=status.HTTP_404_NOT_FOUND)
+
+
+class ReportSessionView(APIView):
+    """Genera un PDF con la conversación y lo envía por email al destinatario indicado.
+
+    POST payload: { "email": "destinatario@ejemplo.com" }
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, session_id):
+        try:
+            dest_email = request.data.get("email")
+            if not dest_email:
+                return Response({"error": "Se requiere un email"}, status=status.HTTP_400_BAD_REQUEST)
+
+            try:
+                session = ChatSession.objects.get(id=session_id, user=request.user)
+            except ChatSession.DoesNotExist:
+                return Response({"error": "Sesión no encontrada"}, status=status.HTTP_404_NOT_FOUND)
+
+            # Preparar contenido del PDF
+            messages = session.messages.order_by("created_at").all()
+
+            buffer = io.BytesIO()
+            doc = SimpleDocTemplate(buffer, pagesize=letter,
+                                    rightMargin=72,leftMargin=72,
+                                    topMargin=72,bottomMargin=72)
+            styles = getSampleStyleSheet()
+            story = []
+
+            title = f"Reporte de conversación - Chat #{session.id}"
+            story.append(Paragraph(title, styles['Title']))
+            story.append(Spacer(1, 0.2 * inch))
+
+            first = getattr(request.user, "first_name", "") or ""
+            last = getattr(request.user, "last_name", "") or ""
+            full_name = (first + " " + last).strip()
+            user_display = full_name if full_name else getattr(request.user, "email", "Usuario")
+            meta = f"Usuario: {user_display} - Iniciada: {session.started_at.strftime('%Y-%m-%d %H:%M:%S')}"
+            story.append(Paragraph(meta, styles['Normal']))
+            story.append(Spacer(1, 0.2 * inch))
+
+            for m in messages:
+                role_label = "Usuario" if m.role == "user" else "Asistente"
+                p = Paragraph(f"<b>{role_label}:</b> {m.content}", styles['BodyText'])
+                story.append(p)
+                story.append(Spacer(1, 0.1 * inch))
+
+            doc.build(story)
+            buffer.seek(0)
+
+            # Enviar email con PDF adjunto
+            subject = f"Reporte: Chat #{session.id}"
+            body = render_to_string("chat/report_email.txt", {"session": session, "user": request.user})
+
+            from_email = getattr(settings, "DEFAULT_FROM_EMAIL", None) or "no-reply@example.com"
+            email = EmailMessage(subject, body, from_email, [dest_email])
+            email.attach(f"chat_{session.id}.pdf", buffer.read(), "application/pdf")
+
+            email.send(fail_silently=False)
+
+            return Response({"message": "Reporte enviado"})
+        except Exception as e:
+            tb = traceback.format_exc()
+            logging.exception("Error generating/sending report for session %s", session_id)
+            return Response({"error": "Exception generating or sending report", "detail": str(e), "traceback": tb}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

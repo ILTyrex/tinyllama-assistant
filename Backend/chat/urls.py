@@ -25,4 +25,9 @@ urlpatterns = [
         views.DeleteSessionView.as_view(),
         name="chat-delete",
     ),
+    path(
+        "session/<int:session_id>/report/",
+        views.ReportSessionView.as_view(),
+        name="chat-report",
+    ),
 ]
