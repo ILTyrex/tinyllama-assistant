@@ -1,12 +1,13 @@
-import { useCallback, useLayoutEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { X, Maximize2, Minimize2 } from "lucide-react";
 import { ChatMessages } from "@/components/chat/ChatMessages";
 import { ChatInput } from "@/components/chat/ChatInput";
 import { ChatSidebar } from "@/components/chat/ChatSidebar";
 import { RightPanel } from "@/components/chat/RightPanel";
-import { mockConversations, Conversation, Message } from "@/lib/mock-data";
+import { Conversation } from "@/lib/mock-data";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useChatSession } from "@/hooks/useChatSession";
 
 interface ChatWidgetProps {
   open: boolean;
@@ -14,99 +15,59 @@ interface ChatWidgetProps {
 }
 
 export function ChatWidget({ open, onClose }: ChatWidgetProps) {
-  const [conversations, setConversations] =
-    useState<Conversation[]>(mockConversations);
-  const [activeId, setActiveId] = useState<string | null>(
-    mockConversations[0]?.id ?? null,
-  );
-  const [isTyping, setIsTyping] = useState(false);
-  const [isSending, setIsSending] = useState(false);
+  const {
+    messages,
+    isTyping,
+    isSending,
+    error,
+    startSession,
+    sendMessage,
+    resetConversation,
+  } = useChatSession();
+
   const [expanded, setExpanded] = useState(false);
 
-  useLayoutEffect(() => {
-    if (open) {
-      setExpanded(false);
-    }
-  }, [open]);
-
-  const active = useMemo(
-    () => conversations.find((c) => c.id === activeId) ?? null,
-    [conversations, activeId],
-  );
-
-  const handleSend = useCallback(
-    async (text: string) => {
-      if (!activeId) return;
-      const userMsg: Message = {
-        id: `m-${Date.now()}`,
-        role: "user",
-        content: text,
-        timestamp: new Date(),
-      };
-
-      setConversations((prev) =>
-        prev.map((c) =>
-          c.id === activeId
-            ? {
-                ...c,
-                messages: [...c.messages, userMsg],
-                messageCount: c.messageCount + 1,
-              }
-            : c,
-        ),
-      );
-
-      setIsSending(true);
-      setIsTyping(true);
-
-      await new Promise((r) => setTimeout(r, 1500 + Math.random() * 1000));
-
-      const assistantMsg: Message = {
-        id: `m-${Date.now() + 1}`,
-        role: "assistant",
-        content: `Gracias por tu mensaje. He procesado tu consulta sobre "${text.slice(0, 50)}..."`,
-        timestamp: new Date(),
-      };
-
-      setConversations((prev) =>
-        prev.map((c) =>
-          c.id === activeId
-            ? {
-                ...c,
-                messages: [...c.messages, assistantMsg],
-                messageCount: c.messageCount + 1,
-              }
-            : c,
-        ),
-      );
-
-      setIsTyping(false);
-      setIsSending(false);
-    },
-    [activeId],
-  );
-
-  const handleReset = () => {
-    if (!activeId) return;
-    setConversations((prev) =>
-      prev.map((c) =>
-        c.id === activeId ? { ...c, messages: [], messageCount: 0 } : c,
-      ),
-    );
-  };
-
-  const handleNewConversation = () => {
-    const newConv: Conversation = {
-      id: `conv-${Date.now()}`,
-      title: "Nueva conversación",
-      snippet: "Empieza a escribir...",
+  const conversation: Conversation = useMemo(
+    () => ({
+      id: "chat",
+      title: "NexusChat",
+      snippet:
+        messages[messages.length - 1]?.content ?? "Empieza a escribir...",
       date: new Date(),
       tags: [],
-      messageCount: 0,
-      messages: [],
-    };
-    setConversations((prev) => [newConv, ...prev]);
-    setActiveId(newConv.id);
+      messageCount: messages.length,
+      messages,
+    }),
+    [messages],
+  );
+
+  const conversations = useMemo(() => [conversation], [conversation]);
+
+  useEffect(() => {
+    if (!open) return;
+    startSession().catch(() => {
+      // error already handled by hook
+    });
+  }, [open, startSession]);
+
+  const handleSend = async (text: string) => {
+    try {
+      await sendMessage(text);
+    } catch {
+      // Error is handled in hook; no-op here
+    }
+  };
+
+  const handleReset = async () => {
+    await resetConversation();
+  };
+
+  const handleNewConversation = async () => {
+    await resetConversation();
+  };
+
+  const handleClose = () => {
+    onClose();
   };
 
   if (!open) return null;
@@ -129,7 +90,7 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
               variant="ghost"
               size="icon"
               className="text-muted-foreground hover:text-foreground"
-              onClick={onClose}
+              onClick={handleClose}
               title="Cerrar"
             >
               <X className="w-4 h-4" />
@@ -139,26 +100,27 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
           <div className="flex h-full w-full">
             <ChatSidebar
               conversations={conversations}
-              activeId={activeId}
-              onSelect={setActiveId}
+              activeId="chat"
+              onSelect={() => {
+                /* only one session for now */
+              }}
               onNew={handleNewConversation}
             />
 
             <div className="flex-1 flex flex-col min-w-0">
               <div className="h-14 border-b border-border flex items-center px-4">
                 <h2 className="font-display font-semibold text-foreground truncate">
-                  {active?.title ?? "NexusChat"}
+                  {conversation.title}
                 </h2>
-                {active && (
-                  <span className="ml-3 text-xs text-muted-foreground">
-                    {active.messageCount} mensajes
-                  </span>
-                )}
+                <span className="ml-3 text-xs text-muted-foreground">
+                  {conversation.messageCount} mensajes
+                </span>
               </div>
-              <ChatMessages
-                messages={active?.messages ?? []}
-                isTyping={isTyping}
-              />
+              {error ? (
+                <div className="p-6 text-sm text-red-500">{error}</div>
+              ) : (
+                <ChatMessages messages={messages} isTyping={isTyping} />
+              )}
               <ChatInput
                 onSend={handleSend}
                 onReset={handleReset}
@@ -167,7 +129,7 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
               />
             </div>
 
-            <RightPanel conversation={active} />
+            <RightPanel conversation={conversation} />
           </div>
         </div>
       </div>
@@ -195,7 +157,7 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
             variant="ghost"
             size="icon"
             className="text-muted-foreground hover:text-foreground"
-            onClick={onClose}
+            onClick={handleClose}
             title="Cerrar"
           >
             <X className="w-4 h-4" />
@@ -225,11 +187,13 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
                 key={conv.id}
                 className={cn(
                   "w-full px-3 py-2 text-left text-xs font-medium transition-colors",
-                  conv.id === activeId
+                  conv.id === "chat"
                     ? "bg-primary/10 text-primary"
                     : "text-muted-foreground hover:bg-secondary/30",
                 )}
-                onClick={() => setActiveId(conv.id)}
+                onClick={() => {
+                  /* only one session for now */
+                }}
                 title={conv.title}
               >
                 {conv.title}
@@ -241,14 +205,18 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
         <div className="flex flex-col flex-1 min-w-0">
           <div className="flex items-center justify-between px-4 py-3 border-b border-border">
             <h3 className="text-sm font-medium text-foreground">
-              {active?.title ?? "NexusChat"}
+              {conversation.title}
             </h3>
             <span className="text-xs text-muted-foreground">
-              {active?.messageCount ?? 0} mensajes
+              {conversation.messageCount} mensajes
             </span>
           </div>
 
-          <ChatMessages messages={active?.messages ?? []} isTyping={isTyping} />
+          {error ? (
+            <div className="p-6 text-sm text-red-500">{error}</div>
+          ) : (
+            <ChatMessages messages={messages} isTyping={isTyping} />
+          )}
           <ChatInput
             onSend={handleSend}
             onReset={handleReset}
