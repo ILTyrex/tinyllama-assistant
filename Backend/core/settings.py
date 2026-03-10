@@ -32,9 +32,7 @@ SECRET_KEY = os.environ.get(
 DEBUG = os.environ.get("DEBUG", "True").strip().lower() in {"1", "true", "yes", "y"}
 
 allowed_hosts = [
-    h.strip()
-    for h in os.environ.get("ALLOWED_HOSTS", "").split(",")
-    if h.strip()
+    h.strip() for h in os.environ.get("ALLOWED_HOSTS", "").split(",") if h.strip()
 ]
 render_host = os.environ.get("RENDER_EXTERNAL_HOSTNAME")
 if render_host:
