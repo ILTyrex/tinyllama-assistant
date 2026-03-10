@@ -22,6 +22,7 @@ from .views import health
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("health", health, name="health-noslash"),
     path("health/", health, name="health"),
     path("api/auth/", include("users.urls")),
     path("api/courses/", include("courses.urls")),
